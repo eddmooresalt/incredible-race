@@ -201,7 +201,11 @@
   <div id="flightNarrationOverlay">
     <div class="route-label">In the Air</div>
     <div class="plane-interior-banner flight-route-banner-slot"></div>
-    <div id="flightSceneWrap" style="display:none;"><div id="flightNarrationSceneEmoji">✈️</div><div id="flightCloudsDecor"></div></div>
+    <div id="flightSceneWrap" style="display:none;">
+      <div id="flightNarrationArtwork" aria-hidden="true"></div>
+      <div id="flightNarrationSceneEmoji">✈️</div>
+      <div id="flightCloudsDecor"></div>
+    </div>
     <p class="host-line" id="flightNarrationText" style="max-width:340px;"></p>
     <div style="width:100%; max-width:320px; margin-top:14px;">
       <button class="btn btn-primary" id="flightNarrationContinueBtn" style="display:none;" onclick="continueFlightNarration()">Continue &rarr;</button>
@@ -270,22 +274,23 @@
       <div class="route-label">Task Forfeit</div>
       <div class="forfeit-warning" id="forfeitHeading">Leave This Task?</div>
       <p class="host-line" id="forfeitCopy">Forfeiting is permanent. You will choose either a two-hour penalty or lose every remaining race fund.</p>
-      <div id="forfeitStageOne">
+      <div class="forfeit-stage" id="forfeitStageOne">
+        <div class="forfeit-caution"><span>!</span><div><b>Permanent race decision</b><small>Your current task attempt will end immediately.</small></div></div>
         <button class="btn btn-danger-outline" onclick="confirmForfeitIntent()">Yes, Continue to Penalties</button>
         <button class="btn btn-outline" style="margin-top:9px;" onclick="closeForfeitOverlay()">Return to the Task</button>
       </div>
-      <div id="forfeitStageTwo" style="display:none;">
-        <div class="card" style="text-align:left;">
+      <div class="forfeit-stage" id="forfeitStageTwo" style="display:none;">
+        <div class="card forfeit-choice-intro">
           <div class="card-title">Choose One Consequence</div>
           <p>The choice is applied immediately after one final confirmation.</p>
         </div>
         <div class="penalty-choice">
-          <button class="btn btn-danger-outline" onclick="chooseForfeitPenalty('time')"><b>+2 hours</b><br><span style="font-size:12px; opacity:.74;">Every rival overtakes your team.</span></button>
-          <button class="btn btn-danger-outline" onclick="chooseForfeitPenalty('funds')"><b>Lose all funds</b><br><span style="font-size:12px; opacity:.74;">Your balance becomes zero for this leg.</span></button>
+          <button class="forfeit-penalty-card" onclick="chooseForfeitPenalty('time')"><span class="forfeit-penalty-icon">⏱</span><span><b>+2 hours</b><small>Every rival overtakes your team.</small></span><i>›</i></button>
+          <button class="forfeit-penalty-card" onclick="chooseForfeitPenalty('funds')"><span class="forfeit-penalty-icon">¥</span><span><b>Lose all funds</b><small>Your balance becomes zero for this leg.</small></span><i>›</i></button>
           <button class="btn btn-outline" onclick="returnToForfeitFirstConfirmation()">Go Back</button>
         </div>
       </div>
-      <div id="forfeitStageThree" style="display:none;">
+      <div class="forfeit-stage" id="forfeitStageThree" style="display:none;">
         <div class="result-banner mid">
           <div class="big" id="forfeitFinalTitle">Final Confirmation</div>
           <div class="sub" id="forfeitFinalCopy"></div>
@@ -323,7 +328,7 @@
       <span><b id="titleCountryCount" style="color:var(--gold); font-size:17px;">—</b> COUNTRIES</span>
       <span><b style="color:var(--gold); font-size:17px;">1</b> WINNER</span>
     </div>
-    <div class="build-stamp">Verified Build 46 · August 2026</div>
+    <div class="build-stamp">Verified Build 47 · August 2026</div>
     <p class="host-line" id="titleRaceSummary">Race across a randomized global route, outthink eleven rival teams, and reach the final mat first.</p>
     <div class="main-cta">
       <button class="btn btn-outline" id="continueRaceBtn" style="display:none; margin-bottom:10px;" onclick="resumeGame()">Continue Race &rarr;</button>
@@ -514,8 +519,12 @@
     <div class="eyebrow"><span id="simonEyebrowLabel">Copy the Chant</span> &middot; Round <span id="simonRoundDisplay">1</span>/4</div>
     <h1 class="headline">Watch, Then <em>Repeat</em></h1>
     <p class="host-line" id="simonStatusLine" style="text-align:center">Watch closely...</p>
-    <div id="simonGrid" style="display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin:8px 0;"></div>
-    <div class="score-line" style="margin-top:8px;">Mistakes: <b id="simonMistakeCount">0</b></div>
+    <div class="simon-stage">
+      <div class="simon-phase" id="simonPhase">Memorise</div>
+      <div id="simonGrid"></div>
+      <div class="simon-input-progress" id="simonInputProgress" aria-label="Sequence progress"></div>
+    </div>
+    <div class="score-line simon-score">Mistakes: <b id="simonMistakeCount">0</b><span>Wrong taps add 6 minutes</span></div>
   </div>
 
   <!-- MINIGAME: CULTURAL MEMORY CARDS (24 cards / 12 pairs) -->

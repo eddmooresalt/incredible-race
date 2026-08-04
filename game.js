@@ -1994,7 +1994,9 @@ function openRouteClueBox() {
         document.getElementById('routeInfoOverlay').classList.remove('sealed-mode');
         document.getElementById('routeSealedSection').style.display = 'none';
         document.getElementById('routeRevealSection').style.display = 'flex';
-        document.getElementById('routePlace').textContent = display.place;
+        const routePlaceEl = document.getElementById('routePlace');
+        routePlaceEl.textContent = display.place;
+        routePlaceEl.dataset.length = display.place.length > 30 ? 'xlong' : display.place.length > 20 ? 'long' : 'short';
         document.getElementById('routeCountry').textContent = display.country;
         const rbSlot = document.getElementById('routeBannerSlot');
         rbSlot.innerHTML = display.banner ? renderBannerSVG(display.banner, display.bannerName || display.place, display.label) : '';
@@ -2048,7 +2050,7 @@ function openTaskClueBox() {
         const overlay = document.getElementById('taskClueOverlay');
         overlay.classList.remove('sealed-mode');
         document.getElementById('taskClueSealed').style.display = 'none';
-        document.getElementById('taskClueRevealed').style.display = 'block';
+        document.getElementById('taskClueRevealed').style.display = 'flex';
         const word = document.getElementById('taskClueWord');
         word.textContent = revealLabel;
         word.style.display = 'block';
@@ -2181,9 +2183,9 @@ let pendingBusJourney = null;
 let selectedBusRow = null;
 let selectedBusExitSide = 'front';
 const CAR_CHOICES = [
-    { name: 'Suzuki Swift', tier: 'Value', speed: 'Slowest', costFactor: .55, timeFactor: 1.45, speedWidth: 34 },
-    { name: 'Toyota Corolla', tier: 'Standard', speed: 'Medium', costFactor: 1, timeFactor: 1, speedWidth: 66 },
-    { name: 'BMW 3 Series', tier: 'Performance', speed: 'Fastest', costFactor: 1.75, timeFactor: .72, speedWidth: 100 },
+    { name: 'Suzuki Swift', tier: 'Value', speed: 'Slowest', costFactor: .5, timeFactor: 1.45, speedWidth: 34 },
+    { name: 'Toyota Corolla', tier: 'Standard', speed: 'Medium', costFactor: .7, timeFactor: 1, speedWidth: 66 },
+    { name: 'BMW 3 Series', tier: 'Performance', speed: 'Fastest', costFactor: .9, timeFactor: .72, speedWidth: 100 },
 ];
 function minutesOfDay() { return ((clockMinutes % 1440) + 1440) % 1440; }
 function busServiceState() {
@@ -2201,7 +2203,10 @@ function busCostRange() {
 }
 function carCostRange() {
     const base = fareFor('car');
-    return [Math.max(0, Math.round(base * .55)), Math.max(0, Math.round(base * 1.75))];
+    return [Math.max(0, Math.round(base * CAR_CHOICES[0].costFactor)), carRentalCost(base, CAR_CHOICES[CAR_CHOICES.length - 1])];
+}
+function carRentalCost(base, car) {
+    return Math.max(0, Math.min(Math.round(base * car.costFactor), currentLegData.startBudget));
 }
 function pickRandomModes(noTrain) {
     const transportModes = buildTransportModes();
@@ -2603,7 +2608,7 @@ function showCarChoices(baseMode, destLabel, nextScreenId) {
     area.classList.add('transport-options');
     area.innerHTML = '';
     CAR_CHOICES.forEach(car => {
-        const cost = Math.round(baseMode.cost * car.costFactor);
+        const cost = carRentalCost(baseMode.cost, car);
         const time = Math.max(8, Math.round(baseMode.time * car.timeFactor));
         const disabled = budget < cost;
         const el = document.createElement('div');
@@ -3483,12 +3488,19 @@ function nextSimonRound() {
     simonSequence = [];
     for (let i = 0; i < length; i++)
         simonSequence.push(Math.floor(Math.random() * SIMON_SYMBOLS.length));
+    renderSimonInputProgress();
     replaySimonRound();
+}
+function renderSimonInputProgress() {
+    const progress = document.getElementById('simonInputProgress');
+    progress.innerHTML = simonSequence.map((_, index) => `<i class="${index < simonInputIndex ? 'done' : ''}"></i>`).join('');
 }
 function replaySimonRound() {
     simonInputIndex = 0;
     simonAcceptingInput = false;
+    document.getElementById('simonPhase').textContent = 'Memorise';
     document.getElementById('simonStatusLine').textContent = 'Watch closely...';
+    renderSimonInputProgress();
     playSimonSequence(simonSequence.length);
 }
 function playSimonSequence(length) {
@@ -3501,6 +3513,7 @@ function playSimonSequence(length) {
             return;
         if (step >= simonSequence.length) {
             simonAcceptingInput = true;
+            document.getElementById('simonPhase').textContent = 'Your turn';
             document.getElementById('simonStatusLine').textContent = 'Your turn — repeat the sequence.';
             return;
         }
@@ -3521,6 +3534,7 @@ function handleSimonTap(i, tile) {
         tile.classList.add('lit');
         setTimeout(() => tile.classList.remove('lit'), 150);
         simonInputIndex++;
+        renderSimonInputProgress();
         if (simonInputIndex >= simonSequence.length) {
             simonAcceptingInput = false;
             document.getElementById('simonStatusLine').textContent = 'Correct!';
@@ -3808,7 +3822,7 @@ function finishGamble() {
     resolveMinigame('gamble', totalRoughFinishes, score, timeCost, gambleContext);
 }
 /* ---------- CODE BREAKER (Mastermind-style — unlimited guesses cost time, never bust) ---------- */
-const CODE_COLORS = ['1', '2', '3', '4', '5', '6'];
+const CODE_COLORS = ['1', '2', '3', '4', '5'];
 const CODE_LENGTH = 4;
 let codeContext = 'detour', codeSecret = [], codeGuess = [], codeGuesses = 0, codeLocked = false, codeFinishTimer = null;
 function startCode(context) {
@@ -4203,16 +4217,17 @@ function showForfeitResult(task, penalty) {
     const consequence = penalty === 'time'
         ? 'A two-hour penalty hits the race clock. Every rival has time to move ahead while your team waits.'
         : `Your ${currentLegData.currencySymbol} balance drops to zero. Free walking routes remain available, but every paid shortcut is now out of reach.`;
+    const forfeitCard = `<div class="forfeit-result-card"><div class="forfeit-result-kicker">Race control &middot; penalty confirmed</div><div class="forfeit-result-main"><div class="forfeit-result-icon">${penalty === 'time' ? '⏱' : '💸'}</div><div><b>${task === 'detour' ? 'Detour' : 'Roadblock'} forfeited</b><span>${penalty === 'time' ? '+120 minutes' : 'All funds surrendered'}</span></div></div></div>`;
     if (task === 'detour') {
         performance.detour = 0;
-        document.getElementById('detourResultBanner').innerHTML = `<div class="result-banner mid"><div class="emoji">🏳️</div><div class="big">Detour Forfeited</div><div class="sub">${penalty === 'time' ? '+120 minutes' : 'All funds surrendered'}</div></div>`;
+        document.getElementById('detourResultBanner').innerHTML = forfeitCard;
         document.getElementById('detourHostLine').textContent = consequence;
         previewProjectedRank('detourProjectedRankText');
         showScreen('screen-detour-result');
     }
     else {
         performance.roadblock = 0;
-        document.getElementById('roadblockResultBanner').innerHTML = renderRoadblockResultCard('forfeit', 'Roadblock Forfeited', penalty === 'time' ? '+120 minutes' : 'All funds surrendered', false, true);
+        document.getElementById('roadblockResultBanner').innerHTML = forfeitCard;
         document.getElementById('roadblockHostLine').textContent = consequence;
         previewProjectedRank('roadblockProjectedRankText');
         showScreen('screen-roadblock-result');
@@ -5729,15 +5744,15 @@ function chooseInFlightActivity(key, cost) {
     }, act.scene, act.sceneClass);
 }
 const ENTERTAINMENT_LIBRARY = [
-    { kind: 'Movies', title: 'Cloudline', runtime: 102, icon: '☁️', a: '#1C5D99', b: '#F28C45' },
-    { kind: 'Movies', title: 'The Last Clue', runtime: 96, icon: '🧭', a: '#5B2747', b: '#E11D3C' },
-    { kind: 'Movies', title: 'Midnight Expressway', runtime: 118, icon: '🌃', a: '#111827', b: '#3558A8' },
-    { kind: 'Shows', title: 'City Detectives', runtime: 48, icon: '🔎', a: '#173A5E', b: '#2E8B8B' },
-    { kind: 'Shows', title: 'Kitchen Sprint', runtime: 42, icon: '🍳', a: '#B5442A', b: '#F2B807' },
-    { kind: 'Shows', title: 'World After Dark', runtime: 52, icon: '🌙', a: '#231942', b: '#5E60CE' },
-    { kind: 'Channels', title: 'World News Live', runtime: 30, icon: '🌐', a: '#143D59', b: '#1E88A8' },
-    { kind: 'Channels', title: 'Nature Channel', runtime: 45, icon: '🌿', a: '#1B4332', b: '#74A84A' },
-    { kind: 'Channels', title: 'Travel 24', runtime: 60, icon: '🗺️', a: '#7A3E1D', b: '#E09F3E' },
+    { kind: 'Movies', title: 'Cloudline', runtime: 102, posterPosition: '0% 0%', narration: 'Sunset burns across the clouds as a lone flight races a storm toward the horizon. The cabin around you disappears into the film.' },
+    { kind: 'Movies', title: 'The Last Clue', runtime: 96, posterPosition: '50% 0%', narration: 'A rain-soaked compass, a sealed clue and one final trail pull you into a globe-spanning mystery.' },
+    { kind: 'Movies', title: 'Midnight Expressway', runtime: 118, posterPosition: '100% 0%', narration: 'Neon lanes streak past as the getaway car cuts through a sleepless city. Even the engine note feels loud through the headphones.' },
+    { kind: 'Shows', title: 'City Detectives', runtime: 48, posterPosition: '0% 50%', narration: 'Two detectives unfold a battered street map beneath the lamps and realise the city itself is the witness.' },
+    { kind: 'Shows', title: 'Kitchen Sprint', runtime: 42, posterPosition: '50% 50%', narration: 'Pans flare, timers scream and two chefs race to plate a final dish before the clock hits zero.' },
+    { kind: 'Shows', title: 'World After Dark', runtime: 52, posterPosition: '100% 50%', narration: 'The episode drifts between moonlit skylines and the hidden lives that begin when each city goes quiet.' },
+    { kind: 'Channels', title: 'World News Live', runtime: 30, posterPosition: '0% 100%', narration: 'A wall of live feeds tracks breaking stories across the globe while the aircraft follows its own line across the map.' },
+    { kind: 'Channels', title: 'Nature Channel', runtime: 45, posterPosition: '50% 100%', narration: 'A toucan watches over a rainforest waterfall as the documentary slips deep beneath the canopy.' },
+    { kind: 'Channels', title: 'Travel 24', runtime: 60, posterPosition: '100% 100%', narration: 'Coastlines, mountain cities and aircraft-window sunsets roll together into an hour of pure wanderlust.' },
 ];
 let selectedEntertainmentIndex = null;
 let entertainmentCategory = 'Movies';
@@ -5769,8 +5784,8 @@ function renderEntertainmentRail() {
     const rail = document.getElementById('entertainmentRail');
     rail.innerHTML = ENTERTAINMENT_LIBRARY.map((item, index) => ({ item, index })).filter(x => x.item.kind === entertainmentCategory).map(({ item, index }) => {
         const unavailable = watchedEntertainmentIndices.has(index) || item.runtime > pendingFlightTravelTime;
-        const logo = item.kind === 'Channels' ? item.title.split(/\s+/).map(w => w[0]).join('').slice(0, 3) : item.icon;
-        return `<button class="ent-card${unavailable ? ' watched' : ''}" data-index="${index}" ${unavailable ? 'disabled' : ''} onclick="selectEntertainment(${index})"><div class="ent-poster" style="--poster-a:${item.a};--poster-b:${item.b}"><span>${logo}</span></div><div class="ent-card-copy"><div class="ent-kind">${item.kind}</div><div class="ent-title">${item.title}</div><div class="ent-runtime">Runtime · <b>${formatRuntime(item.runtime)}</b></div></div></button>`;
+        const formatLabel = item.kind === 'Channels' ? 'Live channel' : item.kind.slice(0, -1);
+        return `<button class="ent-card${unavailable ? ' watched' : ''}" data-index="${index}" ${unavailable ? 'disabled' : ''} onclick="selectEntertainment(${index})"><div class="ent-poster" style="--poster-position:${item.posterPosition}"><span>${formatLabel}</span></div><div class="ent-card-copy"><div class="ent-kind">${item.kind}</div><div class="ent-title">${item.title}</div><div class="ent-runtime">Runtime &middot; <b>${formatRuntime(item.runtime)}</b></div></div></button>`;
     }).join('');
     rail.scrollLeft = 0;
 }
@@ -5794,7 +5809,7 @@ function watchSelectedEntertainment() {
     pendingFlightTravelTime = remaining;
     watchedEntertainmentIndices.add(selectedEntertainmentIndex);
     changeEnergy(8);
-    showFlightNarration(`You watch <b>${item.title}</b> for ${formatRuntime(item.runtime)}. That runtime is removed from the remaining flight wait.`, () => remaining >= 30 ? showEntertainmentLibrary(item.kind) : showMealService(remaining), '🎬', 'scene-entertainment');
+    showFlightNarration(`<b>${item.title}</b> &middot; ${item.narration}<br><br><span class="ent-watch-time">${formatRuntime(item.runtime)} passes in the air.</span>`, () => remaining >= 30 ? showEntertainmentLibrary(item.kind) : showMealService(remaining), '', 'scene-entertainment', item.posterPosition);
 }
 function finishEntertainment() { showMealService(Math.max(0, pendingFlightTravelTime)); }
 /* ---------- FLIGHT ATTENDANT SERVICE ---------- */
@@ -5899,18 +5914,23 @@ function showDrinkService() {
 function finishFlightService() {
     startClockFastForward(pendingRemainingFlightTime, 'Somewhere Over the Horizon', 'The flight carries on, hour after hour.', onFlightComplete);
 }
-function showFlightNarration(text, callback, sceneEmoji, sceneClass) {
+function showFlightNarration(text, callback, sceneEmoji, sceneClass, artworkPosition) {
     if (document.getElementById('flightNarrationOverlay').style.display === 'flex')
         return; // already showing
     setPending('flightNarration', callback);
     const textEl = document.getElementById('flightNarrationText');
     const sceneEl = document.getElementById('flightNarrationSceneEmoji');
-    const usedEmoji = sceneEmoji || '✈️';
+    const sceneWrap = document.getElementById('flightSceneWrap');
+    const artworkEl = document.getElementById('flightNarrationArtwork');
+    const usedEmoji = artworkPosition ? '' : (sceneEmoji || '✈️');
     sceneEl.className = 'route-emoji';
     if (sceneClass)
         sceneEl.classList.add(sceneClass);
     sceneEl.textContent = usedEmoji;
     sceneEl.style.fontSize = '90px';
+    sceneWrap.style.display = 'block';
+    artworkEl.style.display = artworkPosition ? 'block' : 'none';
+    artworkEl.style.setProperty('--poster-position', artworkPosition || '0% 0%');
     const cloudsEl = document.getElementById('flightCloudsDecor');
     if (usedEmoji === '✈️') {
         cloudsEl.style.display = 'block';
@@ -5929,6 +5949,7 @@ function showFlightNarration(text, callback, sceneEmoji, sceneClass) {
 }
 function continueFlightNarration() {
     document.getElementById('flightNarrationOverlay').style.display = 'none';
+    document.getElementById('flightSceneWrap').style.display = 'none';
     const cb = consumePending('flightNarration');
     if (cb)
         cb();
