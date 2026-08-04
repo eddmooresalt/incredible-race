@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Incredible Race — Project Migration</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+<div class="device">
+  <div id="rankHud">
+    <div class="rank-hud-label">Rank</div>
+    <div class="rank-hud-value" id="rankHudValue">—</div>
+    <div class="rank-hud-field" id="rankHudField">of 12</div>
+  </div>
+  <div id="musicToggle" onclick="toggleMusic()">🔊</div>
+
+
+  <div class="statusbar">
+    <div style="display:flex; align-items:center; gap:2px;">
+      <button id="musicToggleBar" onclick="toggleMusic()" aria-label="Toggle music">🔊</button>
+      <div class="leg-tag" id="legTagText">LEG 01 &middot; TOKYO</div>
+    </div>
+    <div class="prize">$<span>100,000</span></div>
+  </div>
+  <div class="subbar">
+    <div class="clock">🕒 <span id="clockDisplay">06:15 JST</span></div>
+    <div class="rank-inline" id="rankInline"><span class="ri-label">Rank</span> <b id="rankInlineValue">&mdash;</b><span class="ri-field" id="rankInlineField"></span></div>
+    <div class="budget"><span id="currencySymbol">¥</span><b id="budgetAmount">15,000</b></div>
+  </div>
+  <div class="energy-hud" aria-label="Team energy">
+    <div class="energy-label">Energy</div>
+    <div class="energy-track"><div class="energy-indicator" id="energyIndicator">▼</div></div>
+    <div class="energy-value" id="energyValue">100</div>
+  </div>
+
+  <!-- TASK CLUE BOX: the task name appears only after the box is opened -->
+  <div id="taskClueOverlay">
+    <div id="taskClueBanner"></div>
+    <div id="taskClueSealed">
+      <div class="route-label">Race Clue Box</div>
+      <div class="real-clue-box" role="img" aria-label="Professional red and gold race clue box"><div class="box-header">RACE CLUE</div><div class="box-body"><div class="box-slot"></div></div><div class="box-leg left"></div><div class="box-leg right"></div><div class="box-foot left"></div><div class="box-foot right"></div></div>
+      <button class="btn btn-primary" onclick="openTaskClueBox()">Open the Clue Box &rarr;</button>
+    </div>
+    <div id="taskClueRevealed" style="display:none; width:100%; max-width:340px;">
+      <div class="task-clue-word" id="taskClueWord">Roadblock</div>
+      <button class="btn btn-primary" id="taskClueContinue" onclick="continueTaskClue()">Begin</button>
+    </div>
+  </div>
+
+  <div id="rideHailPickupOverlay">
+    <div class="pickup-app-pill" id="pickupAppName">Grab</div>
+    <h1 class="headline" style="font-size:28px; margin-top:8px;">Driver <em>Approaching</em></h1>
+    <div class="pickup-map">
+      <svg class="map-art" id="pickupMapArt" viewBox="0 0 360 260" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Live street map showing the driver's route to the pickup point">
+        <rect width="360" height="260" fill="#E9EFE8"/>
+        <path d="M286-14c-18 45-13 82 4 112 13 23 11 49-6 76-12 19-13 47-2 100h92V-14z" fill="#A9DDF0"/>
+        <path d="M282-8c-14 42-9 78 8 108 11 20 9 43-7 69-13 21-15 49-5 93" fill="none" stroke="#79C6E1" stroke-width="3"/>
+        <path d="M7 166c30-22 62-27 88-11 19 12 28 31 25 61-33 17-74 23-117 10z" fill="#B9DDAE"/>
+        <path d="M16 178c23-13 50-14 73-3M27 199c20-9 45-8 69 2" fill="none" stroke="#8FC583" stroke-width="2" opacity=".75"/>
+        <rect x="203" y="12" width="62" height="43" rx="9" fill="#C7E4B5"/>
+        <g fill="#D5DDD7" stroke="#C8D1CB" stroke-width="1">
+          <rect x="18" y="72" width="26" height="21" rx="3"/><rect x="52" y="75" width="35" height="25" rx="3"/><rect x="100" y="18" width="31" height="20" rx="3"/><rect x="141" y="17" width="38" height="27" rx="3"/>
+          <rect x="121" y="67" width="27" height="18" rx="3"/><rect x="163" y="62" width="35" height="26" rx="3"/><rect x="215" y="72" width="25" height="21" rx="3"/><rect x="247" y="77" width="23" height="18" rx="3"/>
+          <rect x="131" y="147" width="33" height="24" rx="3"/><rect x="173" y="153" width="28" height="23" rx="3"/><rect x="235" y="153" width="30" height="26" rx="3"/>
+          <rect x="130" y="211" width="32" height="25" rx="3"/><rect x="174" y="205" width="38" height="27" rx="3"/><rect x="236" y="218" width="28" height="22" rx="3"/>
+        </g>
+        <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M-15 119C57 104 105 111 145 137s82 28 151 5" stroke="#FFFFFF" stroke-width="14"/>
+          <path d="M-15 119C57 104 105 111 145 137s82 28 151 5" stroke="#CFD8D9" stroke-width="8"/>
+          <path d="M101-15c-3 55 8 101 38 135 23 26 21 85 11 155" stroke="#FFFFFF" stroke-width="13"/>
+          <path d="M101-15c-3 55 8 101 38 135 23 26 21 85 11 155" stroke="#D4DBDC" stroke-width="7"/>
+          <path d="M211-12c-14 55-11 100 18 133 24 27 42 69 45 151" stroke="#FFFFFF" stroke-width="12"/>
+          <path d="M211-12c-14 55-11 100 18 133 24 27 42 69 45 151" stroke="#D4DBDC" stroke-width="6"/>
+          <path d="M-12 49C53 45 111 53 163 83s96 28 139 6" stroke="#FFFFFF" stroke-width="9"/>
+          <path d="M-12 49C53 45 111 53 163 83s96 28 139 6" stroke="#D8DEDF" stroke-width="4"/>
+          <path d="M35 42H82V105H165V150H227V211H318" stroke="#FFFFFF" stroke-width="17"/>
+          <path d="M35 42H82V105H165V150H227V211H318" stroke="#BCC9CD" stroke-width="11"/>
+          <path id="pickupRoutePath" d="M35 42H82V105H165V150H227V211H318" stroke="#2878FF" stroke-width="6"/>
+        </g>
+        <g fill="#FFFFFF" stroke="#98A8AC" stroke-width="1.2">
+          <circle cx="102" cy="116" r="3"/><circle cx="160" cy="128" r="3"/><circle cx="217" cy="151" r="3"/><circle cx="258" cy="198" r="3"/>
+        </g>
+      </svg>
+      <div class="pickup-map-chip"><small id="pickupMapCity">Live pickup</small><span id="pickupMapDestination">Your location</span></div>
+      <div class="pickup-map-controls" aria-hidden="true"><span>+</span><span>−</span></div>
+      <div class="pickup-car" id="pickupCar" aria-label="Driver car">
+        <svg viewBox="0 0 48 36" aria-hidden="true">
+          <ellipse cx="23" cy="30" rx="18" ry="4" fill="rgba(23,38,44,.24)"/>
+          <path d="M5 9Q6 5 11 4h22q6 0 10 8l2 4-2 9q-1 5-7 5H11q-6 0-7-5L3 15z" fill="#172A38" stroke="#FFFFFF" stroke-width="2"/>
+          <path d="M11 7h20q5 0 8 7H8q1-5 3-7z" fill="#65C8EA"/>
+          <path d="M8 18h32v7H8z" fill="#2878FF"/>
+          <circle cx="11" cy="27" r="3" fill="#26343A"/><circle cx="36" cy="27" r="3" fill="#26343A"/>
+          <path d="M41 13l5 4-5 4z" fill="#F2B807"/>
+        </svg>
+      </div>
+      <div class="pickup-player"><span>🏁</span></div>
+    </div>
+    <div class="pickup-eta-row"><div class="pickup-eta" id="pickupEta">12 min</div><div class="pickup-live">● Live</div></div>
+    <p class="host-line" id="pickupStatus">Your driver is moving toward your pickup point.</p>
+    <div style="width:100%;max-width:340px;"><button class="btn btn-outline" onclick="returnToTransportOptions()">Cancel &amp; Choose Another Ride</button></div>
+  </div>
+  <div id="touchdownOverlay"><div><div style="font-size:70px;">✈️</div><div class="touchdown-copy" id="touchdownCopy">Touchdown</div></div></div>
+
+  <div class="chyron">
+    <div class="chyron-flag"><span class="chyron-dot"></span>LAST SEEN</div>
+    <div class="chyron-feed"><div class="chyron-track" id="chyronTrack"><b>Jake &amp; Tyler</b> — spotted arguing with a vending machine, 14 min ago &nbsp;//&nbsp;</div></div>
+  </div>
+
+  <div id="landmarkBanner"></div>
+
+  <!-- ROUTE INFO OVERLAY -->
+  <div id="routeInfoOverlay">
+    <div class="route-label" id="routeInfoLabel">Route Info</div>
+    <div id="routeSealedSection" style="display:flex; flex-direction:column; align-items:center;">
+      <div id="routeApproachSection" style="display:flex;">
+        <div class="route-step-kicker">Reach the Clue Box</div>
+        <div id="routeApproachScene" aria-label="Running toward the clue box">
+          <div id="routeCurrentBannerSlot"></div>
+          <div class="route-speed-lines"></div>
+          <div class="route-approach-location" id="routeApproachLocationTag">Current Location</div>
+          <div class="clue-station real-clue-box" role="img" aria-label="Professional red and gold race clue box"><div class="box-header">RACE CLUE</div><div class="box-body"><div class="box-slot"></div></div><div class="box-leg left"></div><div class="box-leg right"></div><div class="box-foot left"></div><div class="box-foot right"></div></div>
+          <div class="route-approach-badge" id="routeDistanceBadge">80 m away</div>
+        </div>
+        <div class="route-approach-status" id="routeApproachStatus">Running to the clue box…</div>
+        <div style="width:100%; max-width:300px;">
+          <button class="btn btn-primary" id="routeOpenClueBtn" style="display:none;" onclick="openPendingClueBox()">Open the Clue Box &rarr;</button>
+        </div>
+      </div>
+    </div>
+    <div id="routeRevealSection" style="display:none; flex-direction:column; align-items:center;">
+      <div class="route-step-kicker">Read the Clue</div>
+      <div class="clue-paper">
+        <div class="clue-paper-stamp">✦</div>
+        <div class="clue-paper-header">Next Clue</div>
+        <div class="clue-paper-rule"></div>
+        <div class="clue-paper-instruction">Make your way to:</div>
+        <div class="route-place clue-paper-dest" id="routePlace">Tsukiji Outer Market</div>
+        <div class="route-country clue-paper-where" id="routeCountry">Tokyo, Japan</div>
+        <div class="clue-paper-photo" id="routeBannerSlot"></div>
+      </div>
+      <div style="width:100%; max-width:280px; margin-top:18px;">
+        <button class="btn btn-primary" id="routeInfoContinueBtn" onclick="continueRouteInfo()">Continue Race &rarr;</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- FAST FORWARD TIME OVERLAY -->
+  <div id="fastForwardOverlay">
+    <div class="ff-broadcast-head"><span class="ff-live-pill"><i></i> Race Control</span><span class="ff-leg-mark">Time Transition</span></div>
+    <div class="ff-cinematic-hero"><img id="ffHeroArt" alt="Race chronometer beside an airport at night"><div class="ff-hero-copy"><small>Time Is Moving</small><b id="ffLabel">Later That Night</b></div></div>
+    <div class="plane-interior-banner flight-route-banner-slot" id="ffFlightBanner" style="display:none;"></div>
+    <div class="digital-clock-shell">
+      <div class="digital-clock-brand">Race Control Chronometer</div>
+      <div class="digital-clock-time" id="ffClockTime">18:15:00</div>
+      <div class="digital-clock-zone" id="ffClockZone">Local race time</div>
+    </div>
+    <div class="ff-progress-shell"><div class="ff-progress-copy"><span>Elapsed</span><b id="ffProgressLabel">Advancing time</b></div><div class="ff-progress-track"><i id="ffProgressBar"></i></div></div>
+    <div class="cuisine-stage" id="ffCuisineStage"><div class="cuisine-slide" id="ffCuisineSlide"></div></div>
+    <div class="route-country" id="ffSubtext">Teams rest before their next flight</div>
+    <div style="width:100%; max-width:280px; margin-top:18px;">
+      <button class="btn btn-primary" id="ffTearBtn" style="display:none;" onclick="continueFastForward()">Continue &rarr;</button>
+    </div>
+  </div>
+
+  <!-- FLIGHT READY CONFIRMATION -->
+  <div id="flightReadyOverlay">
+    <div class="route-label">Airport Counter</div>
+    <img id="counterAgentAvatar" alt="Friendly airport counter agent" style="width:min(260px,82vw);height:176px;object-fit:cover;object-position:center 22%;border:2px solid rgba(242,184,7,.5);border-radius:18px;box-shadow:0 16px 38px rgba(0,0,0,.45);margin:12px 0;">
+    <div class="route-place" style="font-size:22px; margin-bottom:12px;" id="counterAgentName">Priya at the counter</div>
+    <p class="host-line" style="max-width:340px;" id="counterQueueText">You join the back of a queue that has not moved in eleven minutes.</p>
+    <div class="card" style="text-align:left; width:100%; max-width:340px;">
+      <p><b id="counterAgentLabel">Priya</b>: <span id="counterAgentLine">Two seats? Let me see what's left.</span></p>
+    </div>
+    <div style="width:100%; max-width:340px; margin-top:10px;">
+      <button class="btn btn-primary" onclick="confirmFlightReady()">CONFIRM: Race for the Early Flight</button>
+    </div>
+  </div>
+
+  <!-- FLIGHT CHOICE OVERLAY -->
+  <div id="flightChoiceOverlay">
+    <div class="route-label">Airport Sprint</div>
+    <div class="route-place" style="font-size:24px; margin-bottom:6px;">Race for the Last Early-Flight Seats</div>
+    <p class="host-line" id="flightWarningText" style="max-width:350px; margin-bottom:5px;">Tap RUN rapidly to fill your lane. The first team to reach the counter gets the final pair of seats; everyone else takes the later flight.</p>
+    <div class="flight-race-countdown" id="flightRaceCountdown">Get Ready</div>
+    <div class="flight-race-board" id="flightRaceLanes"></div>
+    <div id="flightButtonsWrap" style="width:100%; max-width:356px;">
+      <button class="btn btn-primary" id="flightTapBtn" onclick="tapFlightRun()" disabled>🏃 RUN! TAP RAPIDLY</button>
+      <div class="flight-tap-meter"><div id="flightPlayerMeter"></div></div>
+      <div class="score-line" style="font-size:12px; margin-bottom:0;">Your sprint: <b id="flightTapPercent" style="font-size:16px;">0%</b></div>
+    </div>
+    <div id="flightRaceResult" style="display:none; width:100%; max-width:356px;">
+      <div class="result-banner mid"><div class="big" id="flightRaceResultTitle"></div><div class="sub" id="flightRaceResultText"></div></div>
+      <button class="btn btn-primary" id="flightRaceContinueBtn" onclick="continueFlightRace()">Continue to Seat Selection &rarr;</button>
+    </div>
+  </div>
+
+  <!-- FLIGHT NARRATION OVERLAY -->
+  <div id="flightNarrationOverlay">
+    <div class="route-label">In the Air</div>
+    <div class="plane-interior-banner flight-route-banner-slot"></div>
+    <div id="flightSceneWrap" style="display:none;"><div id="flightNarrationSceneEmoji">✈️</div><div id="flightCloudsDecor"></div></div>
+    <p class="host-line" id="flightNarrationText" style="max-width:340px;"></p>
+    <div style="width:100%; max-width:320px; margin-top:14px;">
+      <button class="btn btn-primary" id="flightNarrationContinueBtn" style="display:none;" onclick="continueFlightNarration()">Continue &rarr;</button>
+    </div>
+  </div>
+
+  <!-- TAKEOFF COUNTDOWN -->
+  <div id="flightDepartureOverlay">
+    <div class="route-label">Cabin Ready</div>
+    <div class="plane-interior-banner flight-route-banner-slot"></div>
+    <div class="departure-count" id="departureCount">3</div>
+    <div class="route-place" id="departureStatus" style="font-size:21px;">Doors Closed</div>
+    <p class="host-line" id="departureNarration" style="max-width:340px; margin-top:7px;">The cabin lights dim. The engines rise from a hum to a roar.</p>
+    <div class="departure-track"><div class="departure-track-fill" id="departureTrackFill"></div></div>
+  </div>
+
+  <!-- TRAVEL NARRATION OVERLAY -->
+  <div id="travelNarrationOverlay">
+    <div class="route-label">En Route</div>
+    <div class="vehicle-interior-banner" id="travelInteriorBanner"></div>
+    <div class="travel-scene" id="travelEmojiScene">
+      <div class="travel-vehicle" id="travelEmoji">🚕</div>
+      <div class="travel-road"></div>
+    </div>
+    <div id="travelWarningBadge" style="display:none; color:var(--danger); font-family:'Anton',sans-serif; font-size:22px; margin-bottom:8px; text-transform:uppercase; letter-spacing:0.03em;">⚠️ Wrong Line</div>
+    <p class="host-line" id="travelNarrationText" style="max-width:340px;">You're on your way.</p>
+    <div style="width:100%; max-width:320px; margin-top:14px;">
+      <button class="btn btn-primary" id="travelContinueBtn" style="display:none;" onclick="continueTravel()">Continue &rarr;</button>
+    </div>
+  </div>
+
+  <!-- CHAT BREAK OVERLAY (cosmetic partner dialogue) -->
+
+  <div id="raceEventOverlay">
+    <div class="route-label">Random Race Event</div>
+    <div id="raceEventLocationBanner"></div>
+    <div id="raceEventArtwork"></div>
+    <div class="card" style="text-align:left; width:100%; max-width:340px;">
+      <div class="card-title" id="raceEventTitle">Event Title</div>
+      <p id="raceEventScenario">Scenario text goes here.</p>
+      <div id="raceEventOutcomeSection" class="random-event-outcome-inline" style="display:none;">
+        <div class="random-event-outcome-label">What Happened</div>
+        <p id="raceEventOutcomeText"></p>
+        <div class="random-event-effect" id="raceEventEffectText"></div>
+      </div>
+    </div>
+    <div id="raceEventOptions" style="width:100%; max-width:340px; display:flex; flex-direction:column; gap:8px; margin-top:10px;"></div>
+    <div style="width:100%; max-width:340px; margin-top:8px;">
+      <button class="btn btn-primary" id="raceEventContinueBtn" style="display:none;" onclick="continueRaceEvent()">Continue &rarr;</button>
+    </div>
+  </div>
+
+  <div id="incomingYieldOverlay">
+    <div class="route-label">Yield Board</div>
+    <div class="hero-emoji small">⏳</div>
+    <div class="route-place" style="font-size:27px;">You've Been Yielded</div>
+    <p class="host-line" id="incomingYieldText" style="max-width:340px;"></p>
+    <div class="yield-timer-shell"><div class="yield-timer-display" id="incomingYieldTimer">01:00:00</div><div class="yield-timer-label">One-hour race-clock penalty</div></div>
+    <div class="card" style="width:100%; max-width:320px;"><div class="card-title" style="justify-content:center;">Race Penalty</div><p style="text-align:center;">Start the timer and watch the race clock move forward by one hour.</p></div>
+    <div style="width:100%; max-width:300px;"><button class="btn btn-primary" id="incomingYieldStartBtn" onclick="startIncomingYieldTimer()">Serve the Penalty &rarr;</button><button class="btn btn-primary" id="incomingYieldContinueBtn" style="display:none;" onclick="continueIncomingYield()">Penalty Served — Continue &rarr;</button></div>
+  </div>
+
+  <!-- DOUBLE-CONFIRM TASK FORFEIT -->
+  <div id="taskForfeitOverlay">
+    <div id="taskForfeitPanel">
+      <div class="route-label">Task Forfeit</div>
+      <div class="forfeit-warning" id="forfeitHeading">Leave This Task?</div>
+      <p class="host-line" id="forfeitCopy">Forfeiting is permanent. You will choose either a two-hour penalty or lose every remaining race fund.</p>
+      <div id="forfeitStageOne">
+        <button class="btn btn-danger-outline" onclick="confirmForfeitIntent()">Yes, Continue to Penalties</button>
+        <button class="btn btn-outline" style="margin-top:9px;" onclick="closeForfeitOverlay()">Return to the Task</button>
+      </div>
+      <div id="forfeitStageTwo" style="display:none;">
+        <div class="card" style="text-align:left;">
+          <div class="card-title">Choose One Consequence</div>
+          <p>The choice is applied immediately after one final confirmation.</p>
+        </div>
+        <div class="penalty-choice">
+          <button class="btn btn-danger-outline" onclick="chooseForfeitPenalty('time')"><b>+2 hours</b><br><span style="font-size:12px; opacity:.74;">Every rival overtakes your team.</span></button>
+          <button class="btn btn-danger-outline" onclick="chooseForfeitPenalty('funds')"><b>Lose all funds</b><br><span style="font-size:12px; opacity:.74;">Your balance becomes zero for this leg.</span></button>
+          <button class="btn btn-outline" onclick="returnToForfeitFirstConfirmation()">Go Back</button>
+        </div>
+      </div>
+      <div id="forfeitStageThree" style="display:none;">
+        <div class="result-banner mid">
+          <div class="big" id="forfeitFinalTitle">Final Confirmation</div>
+          <div class="sub" id="forfeitFinalCopy"></div>
+        </div>
+        <button class="btn btn-danger-outline" id="forfeitApplyBtn" onclick="applyTaskForfeit()">Confirm Forfeit</button>
+        <button class="btn btn-outline" style="margin-top:9px;" onclick="returnToForfeitPenaltyChoice()">Change My Choice</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TASK ALERT BUMPER (Route Info / Detour / Roadblock) -->
+  <div id="taskAlertOverlay" aria-live="polite">
+    <div class="clue-takeover-stage">
+      <div id="taskAlertSfx" class="clue-takeover-word clue-sfx-word">RIP!</div>
+      <div id="taskAlertLabel" class="clue-takeover-word clue-label-word">DETOUR</div>
+    </div>
+  </div>
+
+  <!-- TITLE / GAME INTRO -->
+  <!-- CINEMATIC INTRO (plays once, word by word, before the title screen) -->
+  <div id="introCinematicOverlay">
+    <div class="cinematic-phrase" id="cinematicPhraseText"></div>
+    <button class="cinematic-skip" onclick="skipCinematicIntro()">Skip &rarr;</button>
+  </div>
+
+  <div class="screen active" id="screen-title">
+    <div class="eyebrow">Season 1 &middot; Worldwide</div>
+    <h1 class="headline" style="font-size:40px; line-height:0.98;">The <em>Incredible</em><br>Race</h1>
+    <div id="titleLogoCard">
+      <img id="titleLogoImage" src="/assets/generated/title-logo-build36.webp" alt="The Incredible Race title artwork">
+      <div class="title-card-glow" aria-hidden="true"></div>
+    </div>
+    <div class="title-stats" style="display:flex; justify-content:center; gap:18px; font-family:'JetBrains Mono',monospace; font-size:12px; letter-spacing:0.1em; color:rgba(245,240,230,0.65);">
+      <span><b style="color:var(--gold); font-size:17px;">12</b> TEAMS</span>
+      <span><b id="titleCountryCount" style="color:var(--gold); font-size:17px;">—</b> COUNTRIES</span>
+      <span><b style="color:var(--gold); font-size:17px;">1</b> WINNER</span>
+    </div>
+    <div class="build-stamp">Verified Build 46 · August 2026</div>
+    <p class="host-line" id="titleRaceSummary">Race across a randomized global route, outthink eleven rival teams, and reach the final mat first.</p>
+    <div class="main-cta">
+      <button class="btn btn-outline" id="continueRaceBtn" style="display:none; margin-bottom:10px;" onclick="resumeGame()">Continue Race &rarr;</button>
+      <button class="btn btn-primary" onclick="startNewRace()">Start the Race &rarr;</button>
+    </div>
+    <details class="title-how">
+      <summary>How the race works</summary>
+      <p>Each leg includes Route Info, a Detour, a Roadblock, possible race twists, and a Pit Stop. Balance speed, cash, and energy to stay ahead.</p>
+    </details>
+  </div>
+
+  <!-- TEAM + AVATAR SETUP -->
+  <div class="screen" id="screen-setup">
+    <div class="eyebrow">Build Your Team</div>
+    <h1 class="headline">Create Your <em>Racers</em></h1>
+
+    <div class="avatar-creator-grid">
+      <div class="avatar-builder">
+        <div class="avatar-builder-title">Your Racer <span>108 combinations</span></div>
+        <div class="avatar-preview" id="playerAvatarPreview"></div>
+        <div class="avatar-fields">
+          <label>Gender<select class="field-select" id="playerGenderSelect" onchange="updateSetupPreview()"><option value="male">Male</option><option value="female">Female</option><option value="nonbinary">Non-Binary</option></select></label>
+          <label>Skin Tone<select class="field-select" id="playerToneSelect" onchange="updateSetupPreview()"><option value="light">Light</option><option value="medium" selected>Medium</option><option value="tan">Tan</option><option value="deep">Deep</option></select></label>
+          <label>Costume<select class="field-select" id="playerCostumeSelect" onchange="updateSetupPreview()"><option value="racer">Race Uniform</option><option value="street">Streetwear</option><option value="athletic">Athletic</option><option value="explorer">Explorer</option><option value="flight">Flight Jacket</option><option value="smart">Smart Casual</option><option value="rain">Rain Gear</option><option value="winter">Winter</option><option value="festival">Festival</option></select></label>
+        </div>
+      </div>
+      <div class="avatar-builder">
+        <div class="avatar-builder-title">Partner <span>same avatar pool</span></div>
+        <div class="avatar-preview" id="setupAvatarPreview"></div>
+        <div class="avatar-fields">
+          <label>Gender<select class="field-select" id="partnerGenderSelect" onchange="updateSetupPreview()"><option value="male">Male</option><option value="female">Female</option><option value="nonbinary">Non-Binary</option></select></label>
+          <label>Skin Tone<select class="field-select" id="partnerToneSelect" onchange="updateSetupPreview()"><option value="light">Light</option><option value="medium">Medium</option><option value="tan" selected>Tan</option><option value="deep">Deep</option></select></label>
+          <label>Costume<select class="field-select" id="partnerCostumeSelect" onchange="updateSetupPreview()"><option value="racer">Race Uniform</option><option value="street">Streetwear</option><option value="athletic">Athletic</option><option value="explorer">Explorer</option><option value="flight" selected>Flight Jacket</option><option value="smart">Smart Casual</option><option value="rain">Rain Gear</option><option value="winter">Winter</option><option value="festival">Festival</option></select></label>
+        </div>
+      </div>
+    </div>
+    <div class="avatar-pool-note">9 costumes × 3 genders × 4 skin tones · each racer is created independently</div>
+
+    <div class="card">
+      <div class="field-label">Partner Name</div>
+      <input type="text" class="field-input" id="partnerNameInput" placeholder="Enter your partner's name" maxlength="24" autocomplete="off" aria-describedby="partnerNameError">
+      <div class="field-error" id="partnerNameError" role="alert">Enter a partner name to continue.</div>
+    </div>
+    <div class="card">
+      <div class="field-label">Relationship</div>
+      <select class="field-select" id="partnerRelationshipSelect">
+        <option>Randomly Paired</option>
+        <option>Dating</option>
+        <option>Married</option>
+        <option>Siblings</option>
+        <option>Best Friends</option>
+        <option>Roommates</option>
+        <option>Parent &amp; Child</option>
+        <option>Coworkers</option>
+      </select>
+    </div>
+    <div class="main-cta"><button class="btn btn-primary" onclick="confirmPartner()">Confirm Team &rarr;</button></div>
+  </div>
+
+  <!-- START CITY -->
+  <div class="screen" id="screen-startcity">
+    <div class="eyebrow">Race Start</div>
+    <h1 class="headline">Departing <em>Home</em></h1>
+    <div id="startAirportBanner"></div>
+    <p class="host-line">All 12 teams start together in <b id="startCityName">Los Angeles, USA</b>, standing shoulder to shoulder on a mat none of them will see again until the very last leg — before the starting flag drops and everyone scatters to opposite corners of the planet, chasing flights, visas, and the first Route Info marker of a race none of them are fully ready for.</p>
+    <div class="card">
+      <div class="stat-row">
+        <div class="stat-pill">STR <b>7</b></div><div class="stat-pill">INT <b>5</b></div>
+        <div class="stat-pill">END <b>8</b></div><div class="stat-pill">FEAR <b>3</b></div>
+      </div>
+    </div>
+    <div class="main-cta"><button class="btn btn-primary" onclick="showStartingAirportDepartureClue()">Run to the Starting Clue &rarr;</button></div>
+  </div>
+
+  <!-- INTRO -->
+  <div class="screen" id="screen-intro">
+    <div class="eyebrow" id="introLegOfTotal">Leg 1 of —</div>
+    <h1 class="headline">Welcome to <em id="introCityName">Tokyo</em></h1>
+    <div class="arrival-command">
+      <div class="arrival-command-top">
+        <div class="arrival-signal"><i></i>Touchdown confirmed</div>
+        <div class="arrival-destination-mark"><span id="introArrivalCode">TOKYO</span><b id="introArrivalFlag">🇯🇵</b></div>
+      </div>
+      <div class="arrival-team-stage">
+        <div class="arrival-person"><div class="arrival-avatar" id="playerAvatarIntro"></div><small>You</small></div>
+        <div class="arrival-team-link"><b>Team</b><i></i><small>On the ground</small></div>
+        <div class="arrival-person"><div class="arrival-avatar" id="partnerAvatarIntro">🧔🏽</div><small id="introPartnerTag">Partner</small></div>
+      </div>
+      <div class="arrival-briefing">
+        <div class="arrival-briefing-head"><span>Arrival briefing</span><b id="introAirportBriefName">Haneda Airport</b></div>
+        <p class="host-line" id="introArrivalLine">You and <b id="partnerNameIntro">your partner</b> step through arrivals at <b id="introAirportName">the airport</b>. Teams are collecting bags, scanning signs and pushing toward the exits.</p>
+        <div class="arrival-live-grid">
+          <div class="arrival-live-item"><small>Race field</small><b><span id="introFieldCount">12</span> teams active</b></div>
+          <div class="arrival-live-item"><small>Next objective</small><b>Locate the clue beyond the terminal</b></div>
+        </div>
+      </div>
+      <div class="arrival-stat-strip" aria-label="Team attributes">
+        <div class="arrival-stat">Strength<b>7</b></div><div class="arrival-stat">Intellect<b>5</b></div>
+        <div class="arrival-stat">Endurance<b>8</b></div><div class="arrival-stat">Fear<b>3</b></div>
+      </div>
+    </div>
+    <div class="main-cta"><button class="btn btn-primary" onclick="goToRoute1()">Head into <span id="introCityBtn">Tokyo</span> &rarr;</button></div>
+  </div>
+
+  <!-- TRANSPORT 1 -->
+  <div class="screen" id="screen-transport1">
+    <div class="eyebrow">Choose Transport</div>
+
+    <h1 class="headline">Get to <em id="transport1Dest">Tsukiji</em></h1>
+    <p class="host-line">Faster costs more cash but ranks you higher on the leaderboard by the time you reach the Pit Stop. Slower saves what little budget you've got, but every extra minute on the road is a minute another team is closing the gap on you.</p>
+    <div class="task-choice" id="transport1Options"></div>
+  </div>
+
+  <!-- DETOUR CHOICE -->
+  <div class="screen" id="screen-detour">
+    <div class="race-event-kicker"><span>Detour · Choose One</span><span>Two Paths · One Decision</span></div>
+    <h1 class="headline" id="detourHeadline">Slurp It <em>or</em> Stack It</h1>
+    <div class="detour-versus"><b>OR</b></div>
+    <div class="task-choice">
+      <div class="event-choice-card" onclick="startDetourGame('A')">
+        <div class="event-choice-media"><img id="detourAArt" alt="Detour option A"><span class="event-option-tag">Option A</span></div>
+        <div class="event-choice-copy"><div class="event-choice-title" id="detourATitle">Slurp It</div><p id="detourADesc">3 bowls. 1 is cursed. Tap fast, don't flinch.</p><span class="event-choice-action">Choose This Task →</span></div>
+      </div>
+      <div class="event-choice-card" onclick="startDetourGame('B')">
+        <div class="event-choice-media"><img id="detourBArt" alt="Detour option B"><span class="event-option-tag">Option B</span></div>
+        <div class="event-choice-copy"><div class="event-choice-title" id="detourBTitle">Stack It</div><p id="detourBDesc">Keep the tower balanced for 8 seconds.</p><span class="event-choice-action">Choose This Task →</span></div>
+      </div>
+    </div>
+    <div class="forfeit-zone">
+      <button class="btn btn-danger-outline" onclick="openTaskForfeit('detour')">Forfeit This Detour</button>
+      <p class="forfeit-note">Skip the task by taking +2 hours or surrendering all remaining funds.</p>
+    </div>
+  </div>
+
+  <!-- MINIGAME: SLURP -->
+  <div class="screen" id="screen-slurp">
+    <div class="eyebrow"><span id="slurpEyebrowLabel">Slurp It</span> &middot; Round <span id="slurpRound">1</span>/7</div>
+    <h1 class="headline">Tap Only <em>the Right One</em></h1>
+    <div class="card" id="slurpBriefing" style="text-align:center; padding:8px;">
+      <div style="font-size:11px; color:rgba(245,240,230,0.55); font-family:'JetBrains Mono',monospace; letter-spacing:0.08em;">TAP THESE</div>
+      <div id="slurpBriefCorrect" style="font-size:28px; margin:2px 0;"></div>
+      <div style="font-size:11px; color:var(--danger); font-family:'JetBrains Mono',monospace; letter-spacing:0.08em; margin-top:4px;">AVOID THESE</div>
+      <div id="slurpBriefDecoy" style="font-size:22px; opacity:0.7;"></div>
+    </div>
+    <div class="score-line">Correct: <b id="slurpHits">0</b> &nbsp;&middot;&nbsp; Wrong: <b id="slurpMissesDisplay">0</b></div>
+    <div class="timer-bar-wrap"><div class="timer-bar" id="slurpTimer"></div></div>
+    <div class="play-area" id="slurpArea"></div>
+  </div>
+
+  <!-- MINIGAME: RHYTHM RUN -->
+  <div class="screen" id="screen-rhythm">
+    <div class="eyebrow">Rhythm Run</div>
+    <h1 class="headline">Hit the <em>Beat</em></h1>
+    <div class="score-line">Score: <b id="rhythmScore">0</b> &middot; Combo: <b id="rhythmCombo">0</b> &middot; Misses: <b id="rhythmMisses">0</b></div>
+    <div class="rhythm-stage" id="rhythmStage"><div class="rhythm-lanes" id="rhythmLanes"><div class="rhythm-lane"></div><div class="rhythm-lane"></div><div class="rhythm-lane"></div><div class="rhythm-lane"></div></div><div class="rhythm-target-line"></div></div>
+    <div class="rhythm-feedback" id="rhythmFeedback">Get Ready</div>
+    <div class="rhythm-controls">
+      <button class="btn btn-outline rhythm-key" onclick="tapRhythmLane(0)">←</button>
+      <button class="btn btn-outline rhythm-key" onclick="tapRhythmLane(1)">↓</button>
+      <button class="btn btn-outline rhythm-key" onclick="tapRhythmLane(2)">↑</button>
+      <button class="btn btn-outline rhythm-key" onclick="tapRhythmLane(3)">→</button>
+    </div>
+  </div>
+
+  <!-- MINIGAME: STACK -->
+  <div class="screen" id="screen-stack">
+    <div class="eyebrow" id="stackEyebrowLabel">Stack It</div>
+    <h1 class="headline">Hold the <em>Balance</em></h1>
+    <div class="hero-emoji small" id="stackEmoji">🍱</div>
+    <div class="tilt-wrap">
+      <div class="tilt-track" id="tiltTrack">
+        <div class="tilt-wall left"></div><div class="tilt-wall right"></div>
+        <div class="tilt-zone"></div>
+        <div class="tilt-marker" id="tiltMarker"></div>
+      </div>
+      <div class="score-line">Time held: <b id="stackTime">0.0s</b> / 14s</div>
+      <div class="score-line">Perfect balance: <b id="stackPerfect">0.0s</b></div>
+      <div class="stack-warn" id="stackWarn">&nbsp;</div>
+    </div>
+    <div class="hold-row">
+      <div class="hold-btn" id="holdLeft">⬅️</div>
+      <div class="hold-btn" id="holdRight">➡️</div>
+    </div>
+  </div>
+
+  <!-- MINIGAME: SIMON SAYS (memory) -->
+  <div class="screen" id="screen-simon">
+    <div class="eyebrow"><span id="simonEyebrowLabel">Copy the Chant</span> &middot; Round <span id="simonRoundDisplay">1</span>/4</div>
+    <h1 class="headline">Watch, Then <em>Repeat</em></h1>
+    <p class="host-line" id="simonStatusLine" style="text-align:center">Watch closely...</p>
+    <div id="simonGrid" style="display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin:8px 0;"></div>
+    <div class="score-line" style="margin-top:8px;">Mistakes: <b id="simonMistakeCount">0</b></div>
+  </div>
+
+  <!-- MINIGAME: CULTURAL MEMORY CARDS (24 cards / 12 pairs) -->
+  <div class="screen" id="screen-match">
+    <div class="eyebrow"><span id="cultureMatchEyebrow">City Memory</span> &middot; 24 Cards</div>
+    <h1 class="headline">Flip Two, <em>Match All</em></h1>
+    <p class="host-line" id="cultureMatchStatus" style="text-align:center;margin-bottom:5px;">Find all twelve culturally relevant pairs.</p>
+    <div class="culture-match-board">
+      <div class="culture-match-summary">
+        <div class="culture-match-stat"><small>Pairs</small><b><span id="culturePairsMatched">0</span>/12</b></div>
+        <div class="culture-match-stat"><small>Wrong</small><b id="cultureMismatchCount">0</b></div>
+        <div class="culture-match-stat"><small>Penalty</small><b><span id="culturePenaltyMinutes">0</span>m</b></div>
+      </div>
+      <div class="culture-match-grid" id="cultureMatchGrid" aria-label="Six by four cultural memory-card grid"></div>
+      <div class="culture-rank-warning" id="cultureRankWarning">Every wrong pair adds four minutes to your race clock and can cost places.</div>
+    </div>
+  </div>
+
+  <!-- MINIGAME: MAKE 21 ARITHMETIC PUZZLE (NO DEALER, NO WAGERS) -->
+  <div class="screen" id="screen-gamble">
+    <div class="eyebrow"><span id="gambleEyebrowLabel">Make the Total</span> &middot; Round <span id="gambleRoundDisplay">1</span>/5</div>
+    <h1 class="headline">Choose the <em>Missing Card</em></h1>
+    <div class="card" style="text-align:center;">
+      <div id="gambleCards" style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin-bottom:10px;"></div>
+      <div class="score-line gamble-target-line">Target total: <b id="gambleTarget">?</b></div>
+      <p id="gambleTipLine" style="margin-top:8px;">Pick the one card that makes the shown cards hit the target exactly.</p>
+    </div>
+    <p class="host-line" id="gambleFeedbackLine" style="text-align:center; min-height:18px;">&nbsp;</p>
+    <div class="btn-row" id="gambleChoices" style="margin-top:4px;"></div>
+    <div class="score-line gamble-live-scoreline" style="margin-top:14px;">Round points: <b id="gambleRoundScore" aria-live="polite">100</b> <span class="gamble-drop-note">drops 1/sec</span><br>Average: <b id="gambleAverageScore">—</b></div>
+  </div>
+
+  <!-- MINIGAME: LANGUAGE FLASHCARDS (memorize then drag-match) -->
+  <div class="screen" id="screen-language">
+    <div class="eyebrow"><span id="languageEyebrowLabel">Cram Session</span></div>
+    <h1 class="headline">Memorize, Then <em>Match</em></h1>
+    <p class="host-line" id="languageStatusLine" style="text-align:center">Memorize these 8 pairs — you have 4s.</p>
+    <div id="languageMemorizeList" style="display:flex; flex-direction:column; gap:6px; margin:8px 0;"></div>
+    <div id="languageMatchArea" style="display:none;">
+      <div style="display:flex; gap:10px;">
+        <div id="languageDropZones" style="flex:1; display:flex; flex-direction:column; gap:8px;"></div>
+        <div id="languageChipPool" style="flex:1; display:flex; flex-direction:column; gap:8px;"></div>
+      </div>
+      <div class="score-line" style="margin-top:12px;">Matched: <b id="languageMatchedCount">0</b>/8 &nbsp;&middot;&nbsp; Missed: <b id="languageMissedCount">0</b> &nbsp;&middot;&nbsp; Resets: <b id="languageResetCount">0</b></div>
+      <button class="btn btn-outline" style="margin-top:10px;" onclick="resetLanguageAttempt()">🔄 Re-memorize (costs time)</button>
+    </div>
+  </div>
+
+  <!-- MINIGAME: CODE BREAKER (Mastermind-style) -->
+  <div class="screen" id="screen-code">
+    <div class="eyebrow"><span id="codeEyebrowLabel">Crack the Code</span></div>
+    <h1 class="headline">Break the <em>Code</em></h1>
+    <p class="host-line" id="codeStatusLine" style="text-align:center">Use the arrows to scroll each slot to a number, then submit your guess.</p>
+    <div id="codeSlots" style="display:flex; gap:10px; justify-content:center; margin:10px 0;"></div>
+    <div class="code-legend">
+      <span>🟢 right number, right slot</span>
+      <span>🟡 right number, wrong slot</span>
+      <span>⚪ not in the code</span>
+    </div>
+    <button class="btn btn-primary" id="codeSubmitBtn" onclick="submitCodeGuess()">Submit Guess</button>
+    <div class="code-history-panel">
+      <div class="code-history-heading"><span>Past Attempts</span><span>Attempts: <b id="codeGuessCount">0</b></span></div>
+      <div class="code-history-empty" id="codeHistoryEmpty">No attempts yet — your green, yellow and white results will stay here.</div>
+      <div id="codeHistory" style="max-height:176px; overflow-y:auto; display:flex; flex-direction:column; gap:6px;" aria-live="polite"></div>
+    </div>
+  </div>
+
+  <!-- DETOUR RESULT -->
+  <div class="screen" id="screen-detour-result">
+    <div class="eyebrow">Detour Result</div>
+    <div id="detourResultBanner"></div>
+    <p class="host-line" id="detourHostLine"></p>
+    <div class="card">
+      <div class="card-title">📊 Projected Rank</div>
+      <p id="detourProjectedRankText">Calculating...</p>
+    </div>
+    <div class="main-cta"><button class="btn btn-primary" onclick="continueFromCompletedTask(goToRoute2)">Take Your Next Clue &rarr;</button></div>
+  </div>
+
+  <!-- TRANSPORT 2 -->
+  <div class="screen" id="screen-transport2">
+    <div class="eyebrow">Choose Transport</div>
+    <h1 class="headline">Get to <em id="transport2Dest">Akihabara</em></h1>
+    <p class="host-line">Same deal as last time — spend more, arrive sooner, and climb higher in the standings, or save your cash and hope the rest of the leg makes up the difference.</p>
+    <div class="task-choice" id="transport2Options"></div>
+  </div>
+
+  <div class="screen" id="screen-transport3">
+    <div class="eyebrow">Choose Transport</div>
+    <h1 class="headline">Get to <em id="transport3Dest">the Pit Stop</em></h1>
+    <p class="host-line">Last stretch of the leg. However you get there, this is the transport that puts you on the mat.</p>
+    <div class="task-choice" id="transport3Options"></div>
+  </div>
+
+  <!-- TRANSPORT SUB-CHOICE (bus lines / train lines) -->
+  <div class="screen" id="screen-transport-sub">
+    <div class="eyebrow" id="subChoiceEyebrow">Choose Your Route</div>
+    <h1 class="headline" id="subChoiceHeadline">Pick a Line</h1>
+    <p class="host-line" id="subChoiceHostLine"></p>
+    <div class="card" id="trainStrangerPanel">
+      <div class="train-stranger-profile">
+        <img class="train-stranger-photo" id="trainStrangerPhoto" alt="A local commuter at the train station">
+        <div>
+          <div class="train-stranger-kicker">Local Commuter</div>
+          <div class="train-stranger-name" id="trainStrangerName">Aiko</div>
+          <p class="train-stranger-copy" id="trainStrangerCopy">They look like they know the station. You can offer any tip—even zero—and ask which line to take.</p>
+        </div>
+      </div>
+      <div class="train-tip-box">
+        <div class="train-tip-row"><span class="train-tip-label">Choose Your Tip</span><span class="train-tip-amount" id="trainTipAmount">$0</span></div>
+        <input id="trainTipSlider" type="range" min="0" max="0" value="0" step="1" oninput="updateTrainTipDisplay()" aria-label="Tip amount">
+        <div class="train-tip-scale"><span>No Tip</span><span id="trainTipMaxLabel">All Remaining Funds</span></div>
+        <button class="btn btn-outline" id="trainAskBtn" onclick="askTrainStranger()">Ask Which Train to Take</button>
+        <div id="trainAdviceBubble" aria-live="polite"></div>
+      </div>
+    </div>
+    <div class="train-lines-divider" id="trainLinesDivider" style="display:none;">Choose a line after hearing—or ignoring—the advice</div>
+    <div class="task-choice" id="subChoiceOptions"></div>
+    <button class="btn btn-outline transport-back" onclick="returnToTransportOptions()">&larr; Back to Transport</button>
+  </div>
+
+  <!-- BUS SEAT SELECTION -->
+  <div class="screen" id="screen-busseats">
+    <div class="eyebrow">Choose Bus Seats</div>
+    <div class="vehicle-interior-banner bus" style="display:block;"><div class="vehicle-route-copy"><div class="vehicle-route-kicker">Bus Journey</div><div class="vehicle-route-text" id="busSeatRouteText">Riding from X to Y</div></div></div>
+    <h1 class="headline">Sit Near the <em>Exit</em></h1>
+    <p class="host-line" id="busSeatHostLine">A seat closer to the exit can save valuable time when the doors open.</p>
+    <div class="bus-seat-cabin"><div class="bus-exit-door front" id="busExitDoor">Exit</div><div class="bus-seat-grid" id="busSeatGrid"></div></div>
+    <div class="bus-seat-legend" id="busSeatLegend">Rows nearest the marked exit are best · occupied pairs cannot be selected</div>
+    <div class="main-cta"><button class="btn btn-primary" id="busSeatConfirmBtn" style="display:none;" onclick="confirmBusSeat()">Take These Seats</button></div>
+    <button class="btn btn-outline transport-back" onclick="returnToTransportOptions()">&larr; Back to Transport</button>
+  </div>
+
+  <!-- ROADBLOCK INTRO -->
+  <div class="screen" id="screen-roadblock-intro">
+    <div class="race-event-kicker"><span>Roadblock · One Racer Only</span><span>Choose Who Performs</span></div>
+    <h1 class="headline">Who Will <em>Take It On</em>?</h1>
+    <div class="roadblock-briefing-card">
+      <div class="roadblock-hero"><img id="roadblockArt" alt="Roadblock challenge"><span class="roadblock-stamp">Roadblock Brief</span><div class="roadblock-task-title" id="roadblockTitle">Arcade Reflex</div></div>
+      <div class="roadblock-copy"><p id="roadblockDesc">Only one of you does this. The other sits out.</p><div class="roadblock-rules"><div class="roadblock-rule"><small>Performs</small><b>One Racer</b></div><div class="roadblock-rule"><small>Partner</small><b>Must Sit Out</b></div></div></div>
+    </div>
+    <div class="btn-row roadblock-decision-row">
+      <button class="btn btn-outline" onclick="openRPS()">Settle It: RPS</button>
+      <button class="btn btn-outline" onclick="showConferScreen()">Discuss Who Goes</button>
+    </div>
+    <div class="forfeit-zone">
+      <button class="btn btn-danger-outline" onclick="openTaskForfeit('roadblock')">Forfeit This Roadblock</button>
+      <p class="forfeit-note">Skip the task by taking +2 hours or surrendering all remaining funds.</p>
+    </div>
+  </div>
+
+  <div class="screen" id="screen-rps">
+    <div class="eyebrow">Rock Paper Scissors</div>
+    <h1 class="headline">Loser Takes <em>the Roadblock</em></h1>
+    <p class="host-line" id="rpsInstruction">Choose your throw. Your partner chooses secretly. Both choices appear together after the count.</p>
+    <div class="rps-stage" id="rpsStage">
+      <div class="rps-cue-wrap" id="rpsCueWrap"><div class="rps-cue" id="rpsCue">Choose Your Throw</div></div>
+      <div class="rps-reveal" id="rpsReveal">
+        <div class="rps-result-card" id="rpsPlayerCard">
+          <div class="rps-contestant">You</div>
+          <div class="rps-hand" id="rpsPlayerHand">?</div>
+          <div class="rps-choice-name" id="rpsPlayerChoice">Hidden</div>
+        </div>
+        <div class="rps-result-card" id="rpsPartnerCard">
+          <div class="rps-contestant"><span class="rps-contestant-avatar" id="rpsPartnerAvatar">🧔</span><span id="rpsPartnerName">Partner</span></div>
+          <div class="rps-hand" id="rpsPartnerHand">?</div>
+          <div class="rps-choice-name" id="rpsPartnerChoice">Hidden</div>
+        </div>
+      </div>
+    </div>
+    <div class="rps-pick-grid" id="rpsChoices">
+      <button class="btn btn-outline rps-choice-btn" onclick="playRPS('rock')"><span class="rps-pick-emoji">✊</span><span>Rock</span></button>
+      <button class="btn btn-outline rps-choice-btn" onclick="playRPS('paper')"><span class="rps-pick-emoji">✋</span><span>Paper</span></button>
+      <button class="btn btn-outline rps-choice-btn" onclick="playRPS('scissors')"><span class="rps-pick-emoji">✌️</span><span>Scissors</span></button>
+    </div>
+    <div class="rps-outcome" id="rpsOutcome" aria-live="polite">
+      <div class="rps-outcome-title" id="rpsOutcomeTitle"></div>
+      <div class="rps-outcome-copy" id="rpsOutcomeCopy"></div>
+      <button class="btn btn-primary" id="rpsContinueBtn" onclick="continueRPSRoadblock()">Begin Roadblock</button>
+    </div>
+  </div>
+
+  <div class="screen" id="screen-confer">
+    <div class="eyebrow">Roadblock Discussion</div>
+    <h1 class="headline">Who Feels <em>Ready?</em></h1>
+    <div class="confer-dialogue-scene">
+      <div id="conferSceneBanner"></div>
+      <div class="confer-speech player" id="conferPlayerBubble"><b>You</b><span>I can take this one. How are you feeling?</span></div>
+      <div class="confer-speech partner" id="conferPartnerBubble"><b id="conferPartnerBubbleName">Partner</b><span>Let’s compare before we decide.</span></div>
+      <div class="confer-racer player" id="conferPlayerAvatar"></div>
+      <div class="confer-racer partner" id="conferPartnerAvatar"></div>
+      <div class="confer-racer-name player">You</div>
+      <div class="confer-racer-name partner" id="conferPartnerSceneName">Partner</div>
+    </div>
+    <div class="confer-confidence-title">Live confidence reading</div>
+    <div class="confidence-stage">
+      <div class="confidence-person"><b>You</b><div class="confidence-meter"><span class="confidence-arrow" id="playerConfidenceArrow">▶</span></div><div class="confidence-value" id="playerConfidenceValue">70 / 100</div></div>
+      <div class="confidence-person"><div class="confidence-label"><span class="partner-mini-avatar" id="partnerAvatarConfer">👨🏽</span><b id="partnerNameConfer">Partner</b></div><div class="confidence-meter"><span class="confidence-arrow" id="partnerConfidenceArrow">▶</span></div><div class="confidence-value" id="partnerConfidenceValue">70 / 100</div></div>
+    </div>
+    <div class="card"><p id="conferAdvice">Take a breath, compare the meters, then make the call.</p></div>
+    <div class="btn-row">
+      <button class="btn btn-outline" onclick="prepRoadblock('you')">I'll do it</button>
+      <button class="btn btn-primary" onclick="prepRoadblock('partner')">Send <span id="partnerNameConferBtn">Partner</span></button>
+    </div>
+  </div>
+
+  <!-- MINIGAME: TARGET RUSH (ROADBLOCK) -->
+  <div class="screen" id="screen-arcade">
+    <div class="eyebrow">Target Rush &middot; <span id="arcadeWho">You</span></div>
+    <h1 class="headline">Tap the <em>Targets</em></h1>
+    <div class="score-line">Score: <b id="arcadeScore">0</b> &nbsp;/&nbsp; Time: <span id="arcadeTime">14.0</span>s</div>
+    <div class="play-area" id="arcadeArea"></div>
+    <p class="host-line" style="text-align:center">Hit as many as you can — but watch for the decoy. Tapping it costs you points.</p>
+  </div>
+
+  <!-- ROADBLOCK RESULT -->
+  <div class="screen" id="screen-roadblock-result">
+    <div class="eyebrow">Roadblock Result</div>
+    <div id="roadblockResultBanner"></div>
+    <p class="host-line" id="roadblockHostLine"></p>
+    <div class="card">
+      <div class="card-title">📊 Projected Rank</div>
+      <p id="roadblockProjectedRankText">Calculating...</p>
+    </div>
+    <div class="main-cta"><button class="btn btn-primary" onclick="continueFromCompletedTask(goToYieldLandmark)">Take Your Next Clue &rarr;</button></div>
+  </div>
+
+  <!-- CHECKPOINT -->
+  <!-- SEATING PLAN -->
+  <div class="screen" id="screen-seating">
+    <div class="eyebrow">Boarding</div>
+    <div class="plane-interior-banner flight-route-banner-slot"></div>
+    <h1 class="headline">Pick Your <em>Seat</em></h1>
+    <p class="host-line">Front rows get you off the plane first — and off the plane first means time in your pocket. Some rows are already taken. That's not always the back ones.</p>
+    <div id="seatMapWrap" style="margin:6px 0; padding-right:4px;"></div>
+    <div class="main-cta"><button class="btn btn-primary" id="seatConfirmBtn" style="display:none;" onclick="confirmSeat()">Take This Row</button></div>
+  </div>
+
+  <!-- BUCKLE UP -->
+  <div class="screen" id="screen-buckle">
+    <div class="eyebrow">Boarding</div>
+    <div class="plane-interior-banner flight-route-banner-slot"></div>
+    <h1 class="headline">Buckle <em>Up</em></h1>
+    <p class="host-line">You and <span id="bucklePartnerName">your partner</span> are settled into <b id="buckleSeatText">Row 3</b>. The seatbelt sign is on. There's no more strategy left to talk through — just the two of you, strangers on either side, and a long flight ahead.</p>
+    <div class="main-cta"><button class="btn btn-primary" onclick="proceedToFlight()">Ready for Takeoff &rarr;</button></div>
+  </div>
+
+  <!-- IN-FLIGHT ACTIVITIES -->
+  <div class="screen" id="screen-inflight">
+    <div class="eyebrow">In the Air</div>
+    <div class="plane-interior-banner flight-route-banner-slot"></div>
+    <h1 class="headline">How Do You <em>Pass the Time?</em></h1>
+    <p class="host-line">Choose how to spend this stretch of the flight. Each option skips a different amount of the real race clock before touchdown.</p>
+    <div id="inflightOptions" class="flight-activity-grid"></div>
+  </div>
+
+  <!-- IN-FLIGHT ENTERTAINMENT HUB -->
+  <div class="screen" id="screen-entertainment">
+    <div class="eyebrow">Seatback Entertainment</div>
+    <div class="plane-interior-banner flight-route-banner-slot"></div>
+    <h1 class="headline">Seatback <em>Library</em></h1>
+    <p class="host-line">Choose a section first. The programme catalogue opens on its own page so nothing is cut off.</p>
+    <div class="ent-category-grid">
+      <button class="ent-category-card" onclick="showEntertainmentLibrary('Movies')"><span class="ent-category-icon">🎬</span><span><span class="ent-category-name">Movies</span><span class="ent-category-copy">Feature-length stories</span></span><span class="ent-category-arrow">›</span></button>
+      <button class="ent-category-card" onclick="showEntertainmentLibrary('Shows')"><span class="ent-category-icon">📺</span><span><span class="ent-category-name">Shows</span><span class="ent-category-copy">Shorter episodes</span></span><span class="ent-category-arrow">›</span></button>
+      <button class="ent-category-card" onclick="showEntertainmentLibrary('Channels')"><span class="ent-category-icon">◉</span><span><span class="ent-category-name">Channels</span><span class="ent-category-copy">News, nature and travel</span></span><span class="ent-category-arrow">›</span></button>
+    </div>
+    <button class="btn btn-outline" onclick="showInFlightActivities()">&larr; Back to Flight Activities</button>
+    <button class="btn btn-primary" id="finishEntertainmentBtn" onclick="finishEntertainment()">Finish Watching &amp; Continue</button>
+  </div>
+
+  <!-- PROGRAMME CATALOGUE: deliberately separate from the plane/narration screen -->
+  <div class="screen" id="screen-entertainment-catalog">
+    <div class="ent-catalog-head">
+      <div class="eyebrow">Entertainment Catalogue</div>
+      <h1 class="headline" style="font-size:27px;margin-bottom:7px;">Choose Something to <em>Watch</em></h1>
+      <div class="entertainment-tabs" id="entertainmentTabs"></div>
+    </div>
+    <p class="host-line">Scroll down through this section. Runtime is removed from the remaining flight time.</p>
+    <div class="entertainment-rail" id="entertainmentRail"></div>
+    <div class="main-cta"><button class="btn btn-primary" id="watchEntertainmentBtn" style="display:none;" onclick="watchSelectedEntertainment()">Watch</button></div>
+    <button class="btn btn-outline" onclick="showEntertainmentHub()">&larr; Back to Entertainment Sections</button>
+  </div>
+
+  <!-- YIELD -->
+  <div class="screen" id="screen-yield">
+    <div class="eyebrow">Yield &middot; <span id="yieldSpotName">the Marker</span></div>
+    <h1 class="headline">Slow Someone <em>Down</em></h1>
+    <div class="yield-hero-card">
+      <div class="yield-hero-top">
+        <div class="yield-emblem">⏳</div>
+        <div class="yield-impact">
+          <div class="yield-impact-label">Penalty applied</div>
+          <div class="yield-impact-time">+1 HOUR</div>
+          <div class="yield-impact-copy">A targeted team is forced to wait while the race keeps moving.</div>
+        </div>
+      </div>
+      <div class="yield-stat-row">
+        <div class="yield-stat-card"><span class="yield-stat-label">Current rank</span><span class="yield-stat-value" id="yieldRankStat">7th</span></div>
+        <div class="yield-stat-card"><span class="yield-stat-label">Eligible teams</span><span class="yield-stat-value" id="yieldEligibleStat">0</span></div>
+      </div>
+    </div>
+    <p class="host-line yield-action-note" id="yieldHostLine">You can force a team behind you to wait one hour. Choose carefully — they'll know it was you.</p>
+    <div id="yieldDecisionPanel" class="btn-row">
+      <button class="btn btn-primary" id="yieldSlowBtn" onclick="openYieldTeamPicker()"><span class="yield-btn-main">Slow Someone Down</span><span class="yield-btn-sub">Choose an eligible team behind you</span></button>
+      <button class="btn btn-outline" id="yieldSkipBtn" onclick="skipYield()"><span class="yield-btn-main">Skip</span><span class="yield-btn-sub">Keep moving without using the Yield</span></button>
+    </div>
+    <div id="yieldPickerPanel" style="display:none;">
+      <div id="yieldOptions"></div>
+      <div class="main-cta"><button class="btn btn-outline" onclick="closeYieldTeamPicker()">&larr; Back</button></div>
+    </div>
+  </div>
+
+  <!-- FLIGHT SERVICE -->
+  <div class="screen" id="screen-flightservice">
+    <div class="eyebrow">In-Flight Service</div>
+    <h1 class="headline" id="serviceHeadline">Anything to Eat?</h1>
+    <div class="flight-attendant-panel">
+      <img id="serviceAttendantImage" src="/assets/generated/art-0e0cad1fcd6ae606.webp" alt="A flight attendant serving a meal from the cabin cart">
+      <div class="flight-attendant-label">Cabin Service</div>
+    </div>
+    <p class="host-line" id="serviceAttendantLine">Can I get you something?</p>
+    <div id="serviceOptions" class="service-options-grid"></div>
+    <div class="main-cta"><button class="btn btn-primary" id="serviceConfirmBtn" style="display:none;">Confirm</button></div>
+  </div>
+
+  <div class="screen" id="screen-pitstop-arrival">
+    <div class="eyebrow">Final Approach</div>
+    <h1 class="headline">Race to <em id="psArrivalPlace">The Pit Stop</em></h1>
+    <div class="cp-arrival-sub" id="psArrivalWhere">City, Country</div>
+    <p class="host-line" id="psArrivalLine">The mat is ahead. Choose how hard to push through the final stretch.</p>
+    <div class="pitstop-pace-grid" id="pitstopPaceOptions"></div>
+    <p class="host-line" style="font-size:12px;margin-top:auto;">Faster pacing costs more energy but can improve your arrival time. Unaffordable choices are locked.</p>
+  </div>
+
+  <div class="screen" id="screen-checkpoint-arrival">
+    <div class="eyebrow">Checkpoint Reached</div>
+    <h1 class="headline"><em id="cpArrivalPlace">The Checkpoint</em></h1>
+    <div class="cp-arrival-sub" id="cpArrivalWhere">City, Country</div>
+    <p class="host-line" id="cpArrivalLine">You're on the mat.</p>
+    <div class="main-cta"><button class="btn btn-primary" onclick="arriveAtCheckpoint()">Check In &rarr;</button></div>
+  </div>
+
+  <div class="screen" id="screen-checkpoint">
+    <div class="eyebrow">Checkpoint</div>
+    <h1 class="headline">First Team <em>Wins Big</em></h1>
+    <div class="ff-board-card">
+      <div class="ff-board-kicker">Fast Forward Board</div>
+      <div class="ff-board-pass">
+        <div>
+          <div class="ff-board-title">Priority Pass</div>
+          <div class="ff-board-copy">First team here gets one shot at a major jump toward the Pit Stop.</div>
+        </div>
+        <div class="ff-board-stamp" id="checkpointPassStatus">Awaiting Result</div>
+      </div>
+    </div>
+    <p class="host-line" id="checkpointHostLine">Checking the board...</p>
+    <div class="card">
+      <div class="card-title">📊 Projected Rank</div>
+      <p id="projectedRankText">Calculating...</p>
+    </div>
+    <div id="checkpointBanter"></div>
+    <div class="main-cta"><button class="btn btn-primary" id="checkpointBtn" onclick="rollFastForward()">Attempt the Fast Forward</button></div>
+  </div>
+
+  <!-- PIT STOP -->
+  <div class="screen" id="screen-pitstop">
+    <div class="eyebrow">Pit Stop</div>
+    <h1 class="headline"><em>Leg <span id="pitstopLegNum">1</span></em> Standings</h1>
+    <div class="pitstop-host-stage"><div id="pitstopHostBanner"></div><img class="pitstop-host-image" id="pitstopHostImage" alt="Race host"><div class="pitstop-rank-call" id="pitstopRankCall"><span class="host-rank-lead">You are team number...</span><strong class="host-rank-number" id="pitstopRankNumber">1!</strong></div></div>
+    <div id="pitstopList"></div>
+    <div id="pitstopEliminationNote" style="display:none;">
+      <div class="result-banner mid">
+        <div class="emoji">🎒</div>
+        <div class="big">You've Been Eliminated</div>
+        <div class="sub">Last team to check in doesn't continue. The race goes on without you.</div>
+      </div>
+    </div>
+    <div class="main-cta">
+      <button class="btn btn-primary" id="pitstopContinueBtn" onclick="startFastForwardTime()">Continue Racing &rarr;</button>
+      <button class="btn btn-outline" id="pitstopRestartBtn" style="display:none;" onclick="restartProto()">Start a New Race</button>
+    </div>
+  </div>
+
+  <div class="progress-dots">
+    <span class="on" id="dot-0"></span><span id="dot-1"></span><span id="dot-2"></span><span id="dot-3"></span><span id="dot-4"></span><span id="dot-5"></span><span id="dot-6"></span><span id="dot-7"></span><span id="dot-8"></span><span id="dot-9"></span><span id="dot-10"></span><span id="dot-11"></span>
+  </div>
+</div>
+
+<script type="module" src="./game.js"></script>
+</body>
+</html>
