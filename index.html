@@ -127,7 +127,7 @@
     <p class="host-line" id="pickupStatus">Your driver is moving toward your pickup point.</p>
     <div class="pickup-lock-note"><span>Booking confirmed</span><small>Ride cannot be cancelled</small></div>
   </div>
-  <div id="touchdownOverlay"><div><div style="font-size:70px;">✈️</div><div class="touchdown-copy" id="touchdownCopy">Touchdown</div></div></div>
+  <div id="touchdownOverlay"><div class="touchdown-banner-card"><img src="assets/generated/touchdown-banner-build62a.png" alt="Passenger aircraft touching down on a runway at golden hour"><div class="touchdown-banner-shade"></div><div class="touchdown-live-copy"><span id="touchdownPhase">Arrival Confirmed</span><div class="touchdown-copy" id="touchdownCopy">Touchdown</div></div></div></div>
 
   <div class="chyron">
     <div class="chyron-flag"><span class="chyron-dot"></span>LAST SEEN</div>
@@ -188,6 +188,24 @@
     <div class="route-country" id="ffSubtext">Teams rest before their next flight</div>
     <div style="width:100%; max-width:280px; margin-top:18px;">
       <button class="btn btn-primary" id="ffTearBtn" style="display:none;" onclick="continueFastForward()">Continue &rarr;</button>
+    </div>
+  </div>
+
+  <!-- LIVE AIRPORT DEPARTURES BOARD -->
+  <div id="flightDeparturesOverlay">
+    <div class="departures-board-scene">
+      <img src="assets/generated/airport-departures-board-build62a.png" alt="Modern airport departures board in an international terminal">
+      <div class="departures-board-ui">
+        <div class="departures-title"><span>DEPARTURES</span><b id="departuresAirportCode">AIRPORT</b></div>
+        <div class="departures-columns"><span>TIME</span><span>FLIGHT</span><span>DESTINATION</span><span>STATUS</span></div>
+        <div id="departuresRows" class="departures-rows"></div>
+      </div>
+    </div>
+    <div class="departures-message">
+      <div class="route-label">Your Connection</div>
+      <div class="route-place" id="departuresRouteTitle">Two Flights Available</div>
+      <p class="host-line" id="departuresEligibilityText"></p>
+      <button class="btn btn-primary" id="departuresContinueBtn" onclick="continueFromDepartureBoard()">Continue</button>
     </div>
   </div>
 
@@ -355,7 +373,7 @@
       <span><b id="titleCountryCount" style="color:var(--gold); font-size:17px;">—</b> COUNTRIES</span>
       <span><b style="color:var(--gold); font-size:17px;">1</b> WINNER</span>
     </div>
-    <button type="button" class="build-stamp build-stamp-link" id="patchNotesOpen" aria-haspopup="dialog" aria-controls="patchNotesModal">Verified Build 62 · August 2026<span>View patch notes</span></button>
+    <button type="button" class="build-stamp build-stamp-link" id="patchNotesOpen" aria-haspopup="dialog" aria-controls="patchNotesModal">Verified Build 62B · August 2026<span>View patch notes</span></button>
     <p class="host-line" id="titleRaceSummary">Race across a randomized global route, outthink eleven rival teams, and reach the final mat first.</p>
     <div class="main-cta">
       <button class="btn btn-outline" id="continueRaceBtn" style="display:none; margin-bottom:10px;" onclick="resumeGame()">Continue Race &rarr;</button>
@@ -611,14 +629,17 @@
   <div class="screen" id="screen-code">
     <div class="eyebrow"><span id="codeEyebrowLabel">Crack the Code</span></div>
     <h1 class="headline">Break the <em>Code</em></h1>
-    <p class="host-line" id="codeStatusLine" style="text-align:center">Use the arrows to scroll each slot to a number, then submit your guess.</p>
-    <div id="codeSlots" style="display:flex; gap:10px; justify-content:center; margin:10px 0;"></div>
-    <div class="code-legend">
-      <span>🟢 right number, right slot</span>
-      <span>🟡 right number, wrong slot</span>
-      <span>⚪ not in the code</span>
+    <div class="code-console">
+      <div class="code-console-glow"></div>
+      <p class="host-line" id="codeStatusLine">Use the arrows to scroll each slot to a number, then submit your guess.</p>
+      <div id="codeSlots" class="code-slots"></div>
+      <div class="code-legend">
+        <span><i class="code-key exact"></i>right number + slot</span>
+        <span><i class="code-key near"></i>right number, wrong slot</span>
+        <span><i class="code-key miss"></i>not in code</span>
+      </div>
+      <button class="btn btn-primary" id="codeSubmitBtn" onclick="submitCodeGuess()">Submit Guess</button>
     </div>
-    <button class="btn btn-primary" id="codeSubmitBtn" onclick="submitCodeGuess()">Submit Guess</button>
     <div class="code-history-panel">
       <div class="code-history-heading"><span>Past Attempts</span><span>Attempts: <b id="codeGuessCount">0</b></span></div>
       <div class="code-history-empty" id="codeHistoryEmpty">No attempts yet — your green, yellow and white results will stay here.</div>
@@ -765,13 +786,14 @@
     </div>
   </div>
 
-  <!-- MINIGAME: TARGET RUSH (ROADBLOCK) -->
+  <!-- MINIGAME: MAZE CHASE (ROADBLOCK) -->
   <div class="screen" id="screen-arcade">
-    <div class="eyebrow">Target Rush &middot; <span id="arcadeWho">You</span></div>
-    <h1 class="headline">Tap the <em>Targets</em></h1>
-    <div class="score-line">Score: <b id="arcadeScore">0</b> &nbsp;/&nbsp; Time: <span id="arcadeTime">14.0</span>s</div>
-    <div class="play-area" id="arcadeArea"></div>
-    <p class="host-line" style="text-align:center">Hit as many as you can — but watch for the decoy. Tapping it costs you points.</p>
+    <div class="eyebrow">Neon Maze &middot; <span id="arcadeWho">You</span></div>
+    <h1 class="headline">Run the <em>Maze</em></h1>
+    <div class="maze-hud"><span>Route dots <b id="arcadeScore">0</b>/<b id="arcadeGoal">18</b></span><span>Time <b id="arcadeTime">40.0</b>s</span></div>
+    <div class="maze-shell"><div class="maze-board" id="arcadeArea" aria-label="Neon maze game board"></div></div>
+    <div class="maze-controls" aria-label="Maze direction controls"><button onclick="moveMazePlayer(-1,0)" aria-label="Move up">▲</button><div><button onclick="moveMazePlayer(0,-1)" aria-label="Move left">◀</button><button onclick="moveMazePlayer(1,0)" aria-label="Move down">▼</button><button onclick="moveMazePlayer(0,1)" aria-label="Move right">▶</button></div></div>
+    <p class="host-line maze-help">Collect 18 glowing route dots before time expires. Swipe or use the arrows, and avoid the moving patrols.</p>
   </div>
 
   <!-- ROADBLOCK RESULT -->
@@ -811,8 +833,9 @@
     <div class="eyebrow">In the Air</div>
     <div class="plane-interior-banner flight-route-banner-slot"></div>
     <h1 class="headline">How Do You <em>Pass the Time?</em></h1>
-    <p class="host-line">Choose how to spend this stretch of the flight. Each option skips a different amount of the real race clock before touchdown.</p>
+    <p class="host-line" id="inflightHostLine">Choose how to spend this stretch of the flight. You can keep choosing activities while enough flight time remains.</p>
     <div id="inflightOptions" class="flight-activity-grid"></div>
+    <div class="main-cta"><button class="btn btn-outline" id="inflightFinishBtn" onclick="finishInFlightActivities()">Finish Activities &amp; Continue Flight</button></div>
   </div>
 
   <!-- IN-FLIGHT ENTERTAINMENT HUB -->
@@ -827,7 +850,7 @@
       <button class="ent-category-card channels" onclick="showEntertainmentLibrary('Channels')"><span class="ent-category-icon">◉</span><span class="ent-category-text"><span class="ent-category-name">Channels</span><span class="ent-category-copy">News, nature and travel</span></span><span class="ent-category-arrow">›</span></button>
     </div>
     <button class="btn btn-outline" onclick="showInFlightActivities()">&larr; Back to Flight Activities</button>
-    <button class="btn btn-primary" id="finishEntertainmentBtn" onclick="finishEntertainment()">Finish Watching &amp; Continue</button>
+    <button class="btn btn-primary" id="finishEntertainmentBtn" onclick="finishEntertainment()">Back to Flight Activities</button>
   </div>
 
   <!-- PROGRAMME CATALOGUE: deliberately separate from the plane/narration screen -->
@@ -960,7 +983,7 @@
 
 <div id="adminPlaytestHub" aria-hidden="true">
   <section class="admin-hub-panel" role="dialog" aria-modal="true" aria-labelledby="adminHubTitle">
-    <div class="admin-hub-head"><div><div class="route-label">Build 62</div><h2 id="adminHubTitle">Admin Playtest Hub</h2><p>Jump directly to any game screen or playable task.</p></div><button type="button" id="adminHubClose" aria-label="Close admin hub">×</button></div>
+    <div class="admin-hub-head"><div><div class="route-label">Build 62B</div><h2 id="adminHubTitle">Admin Playtest Hub</h2><p>Jump directly to any game screen or playable task.</p></div><button type="button" id="adminHubClose" aria-label="Close admin hub">×</button></div>
     <div class="admin-link-grid" id="adminLinkGrid"></div>
   </section>
 </div>
@@ -977,6 +1000,13 @@
     </header>
     <div class="patch-notes-scroll" tabindex="0">
     <article class="patch-entry latest">
+      <div class="patch-entry-head"><div><span class="patch-build-number">Build 62B</span><h3>Flights, Touchdown &amp; Arcade Upgrade</h3></div><time>6 Aug 2026</time></div>
+      <ul><li>Players can keep choosing nap, chat, or entertainment activities while enough flight time remains.</li><li>Nap and chat are repeatable; each programme remains unavailable after one watch.</li><li>Cabin service now arrives once after the first completed activity, then returns players to the activity menu.</li><li>Every activity consumes its stated flight time, and only shows that fit the remaining journey can be started.</li></ul>
+      <ul><li>Added a cinematic airport departures display with live 24-hour flight times, dynamically generated route cities and flight numbers, plus believable out-of-race destinations.</li><li>Ride-hail and rental-car arrivals can race for the last early-flight seats; train, bus, and walking arrivals are placed on the later departure.</li></ul>
+      <ul><li>Replaced the touchdown emoji with new cinematic landing artwork that remains in place through the live cash-conversion phase.</li><li>Added a transition recovery path so touchdown cannot remain permanently stuck over the game.</li><li>Completely replaced Target Rush with an original 2D neon maze chase featuring route dots, moving patrols, swipe, keyboard and touch controls.</li><li>Redesigned Mastermind as a polished gradient lock console with clearer feedback keys and attempt history.</li></ul>
+      <ul><li>Fixed a final-sprint ranking bug where the sprint energy deduction could retroactively add up to 27 hidden minutes and drop a leading team to last.</li><li>Made Fast Forward's 30-minute advantage persist through the final pace and Pit Stop calculations.</li></ul>
+    </article>
+    <article class="patch-entry">
       <div class="patch-entry-head"><div><span class="patch-build-number">Build 62</span><h3>Fairer Rankings &amp; Mobile Gameplay Polish</h3></div><time>6 Aug 2026</time></div>
       <ul><li>Rebuilt first-leg standings so rival clocks advance through shared journeys, strong task scores create meaningful advantages, competent teams receive onboarding grace, and a perfect Detour plus perfect Roadblock guarantees first place.</li><li>Replaced randomized rank previews with performance-based projections while preserving forfeits, Yield penalties, energy consequences, final pacing, and saved progress.</li></ul>
       <ul><li>Grounded every clue box on a softly blended paved foreground, with dedicated airport tarmac for terminal scenes.</li><li>Prevented Roadblock performer details and Yield statistics from shrinking or clipping on mobile.</li><li>Converted partner confidence meters to horizontal blue-to-red scales.</li><li>Expanded Hit the Beat lanes without changing their 2.7-second timing.</li><li>Added a clear one-Yield-per-race notice.</li></ul>
@@ -1072,7 +1102,7 @@
       </div>
       <ul><li>Uploaded the migrated web-project baseline used for continued game development.</li><li>Kept the core HTML, CSS, JavaScript gameplay structure and existing race content together in one project.</li></ul>
     </article></div>
-    <div class="patch-notes-footer">Latest verified version · Build 62</div>
+    <div class="patch-notes-footer">Latest verified version · Build 62B</div>
   </section>
 </div>
 <script id="patchNotesScript">

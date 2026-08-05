@@ -1999,7 +1999,8 @@ function energyPlacementPenalty() {
     return Math.round((60 - energy) * 0.75);
 }
 function effectiveElapsed() {
-    return (clockMinutes - legStartClock) + energyPlacementPenalty();
+    const fastForwardCredit = performance.fastForward > 0 ? 30 : 0;
+    return Math.max(0, (clockMinutes - legStartClock) + energyPlacementPenalty() - fastForwardCredit);
 }
 /* ---------- ROUTE INFO OVERLAY ---------- */
 let pendingRouteInfoDisplay = null;
@@ -3040,7 +3041,7 @@ function revealAirportArrival(callback) {
     }
     setActiveFlightRoute(currentLegData.airportName, destinationLeg.airportName);
     pendingRouteInfoBanner = destinationLeg.airportBanner;
-    showRouteInfo('✈️', destinationLeg.airportName, `Fly to ${destinationLeg.countryFull}`, callback, 'Next Flight');
+    showFlightDeparturesBoard(callback);
 }
 /* ---------- RANDOM RACE EVENT (replaces cosmetic partner banter — has real gameplay effect) ---------- */
 /* Each event carries its OWN three actions, written in-world. Players respond to the
@@ -4412,6 +4413,7 @@ function stopActiveMinigame() {
     clearTimeout(languageTimerId);
     clearInterval(arcadeInt);
     clearInterval(arcadeSpawnInt);
+    mazeActive = false;
     clearTimeout(codeFinishTimer);
     stopTotalScoreTimer();
     codeLocked = true;
@@ -4656,59 +4658,166 @@ function simulatePartnerRoadblock() {
     }
     finishRoadblock(roadblockType, null);
 }
-/* ---------- MINIGAME: TARGET RUSH ---------- */
-let arcadeScore = 0, arcadeTimeLeft = 14.0, arcadeInt, arcadeSpawnInt;
+/* ---------- MINIGAME: NEON MAZE CHASE ---------- */
+const MAZE_MAP = [
+    '###########',
+    '#P..#.....#',
+    '#.#.#.###.#',
+    '#.#...#...#',
+    '#.###.#.#.#',
+    '#.....#.#.#',
+    '###.#...#.#',
+    '#...#.###.#',
+    '#.#.....#G#',
+    '#.....#...#',
+    '###########'
+];
+const MAZE_GOAL = 18;
+let arcadeScore = 0, arcadeTimeLeft = 40.0, arcadeInt, arcadeSpawnInt;
+let mazePlayer = { r: 1, c: 1 }, mazeStart = { r: 1, c: 1 }, mazePatrols = [], mazeDots = new Set();
+let mazeHits = 0, mazeActive = false, mazeTouchStart = null, mazeRunnerAngle = 0;
+function mazeKey(r, c) { return `${r},${c}`; }
+function mazeOpen(r, c) { return !!MAZE_MAP[r] && MAZE_MAP[r][c] !== '#'; }
 function startArcade() {
-    arcadeScore = 0;
-    arcadeTimeLeft = 14.0;
-    document.getElementById('arcadeScore').textContent = '0';
-    document.getElementById('arcadeTime').textContent = '14.0';
-    const area = document.getElementById('arcadeArea');
-    area.innerHTML = '';
-    showScreen('screen-arcade');
     clearInterval(arcadeInt);
     clearInterval(arcadeSpawnInt);
-    spawnTarget();
-    arcadeSpawnInt = setInterval(spawnTarget, 480);
+    arcadeScore = 0;
+    arcadeTimeLeft = 40.0;
+    mazeHits = 0;
+    mazeActive = true;
+    mazePlayer = { ...mazeStart };
+    mazePatrols = [{ r: 8, c: 9, color: '#ff4a6d' }, { r: 9, c: 3, color: '#47d7ff' }];
+    mazeDots = new Set();
+    MAZE_MAP.forEach((row, r) => [...row].forEach((cell, c) => {
+        if (cell !== '#' && cell !== 'P' && cell !== 'G')
+            mazeDots.add(mazeKey(r, c));
+    }));
+    document.getElementById('arcadeScore').textContent = '0';
+    document.getElementById('arcadeGoal').textContent = MAZE_GOAL;
+    document.getElementById('arcadeTime').textContent = '40.0';
+    const area = document.getElementById('arcadeArea');
+    area.style.gridTemplateColumns = `repeat(${MAZE_MAP[0].length},1fr)`;
+    area.style.gridTemplateRows = `repeat(${MAZE_MAP.length},1fr)`;
+    area.ontouchstart = event => {
+        const touch = event.changedTouches[0];
+        mazeTouchStart = { x: touch.clientX, y: touch.clientY };
+    };
+    area.ontouchend = event => {
+        if (!mazeTouchStart)
+            return;
+        const touch = event.changedTouches[0];
+        const dx = touch.clientX - mazeTouchStart.x;
+        const dy = touch.clientY - mazeTouchStart.y;
+        mazeTouchStart = null;
+        if (Math.max(Math.abs(dx), Math.abs(dy)) < 18)
+            return;
+        if (Math.abs(dx) > Math.abs(dy))
+            moveMazePlayer(0, dx > 0 ? 1 : -1);
+        else
+            moveMazePlayer(dy > 0 ? 1 : -1, 0);
+    };
+    showScreen('screen-arcade');
+    renderMazeBoard();
+    arcadeSpawnInt = setInterval(moveMazePatrols, 620);
     arcadeInt = setInterval(() => {
-        arcadeTimeLeft -= 0.1;
-        document.getElementById('arcadeTime').textContent = Math.max(arcadeTimeLeft, 0).toFixed(1);
-        if (arcadeTimeLeft <= 0) {
-            clearInterval(arcadeInt);
-            clearInterval(arcadeSpawnInt);
-            area.innerHTML = '';
-            performance.roadblock = Math.min(100, arcadeScore * 7);
-            advanceClock(Math.round(24 - (performance.roadblock / 100) * 16));
-            finishRoadblock('arcade', arcadeScore);
-        }
+        if (!mazeActive)
+            return;
+        arcadeTimeLeft = Math.max(0, arcadeTimeLeft - .1);
+        document.getElementById('arcadeTime').textContent = arcadeTimeLeft.toFixed(1);
+        if (arcadeTimeLeft <= 0)
+            finishMazeGame(false);
     }, 100);
 }
-function spawnTarget() {
+function renderMazeBoard() {
     const area = document.getElementById('arcadeArea');
-    const isDecoy = Math.random() < 0.3;
-    const t = document.createElement('div');
-    t.className = 'target';
-    t.style.fontSize = '40px';
-    t.textContent = isDecoy ? '💢' : currentLegData.roadblockThemes.arcade.taskEmoji;
-    const x = 15 + Math.random() * 70, y = 15 + Math.random() * 70;
-    t.style.left = x + '%';
-    t.style.top = y + '%';
-    t.onclick = () => {
-        if (isDecoy) {
-            arcadeScore = Math.max(0, arcadeScore - 2);
-        }
-        else {
-            arcadeScore++;
-        }
-        document.getElementById('arcadeScore').textContent = arcadeScore;
-        t.remove();
-    };
-    area.appendChild(t);
-    setTimeout(() => { if (t.parentNode)
-        t.remove(); }, 460);
+    area.innerHTML = '';
+    MAZE_MAP.forEach((row, r) => [...row].forEach((cell, c) => {
+        const tile = document.createElement('div');
+        tile.className = `maze-cell${cell === '#' ? ' wall' : ''}`;
+        if (cell !== '#' && mazeDots.has(mazeKey(r, c)))
+            tile.innerHTML = '<i class="maze-dot"></i>';
+        if (mazePlayer.r === r && mazePlayer.c === c)
+            tile.innerHTML = `<i class="maze-runner" style="--runner-angle:${mazeRunnerAngle}deg"></i>`;
+        const patrol = mazePatrols.find(item => item.r === r && item.c === c);
+        if (patrol)
+            tile.innerHTML = `<i class="maze-patrol" style="--patrol:${patrol.color}"></i>`;
+        area.appendChild(tile);
+    }));
 }
+function moveMazePlayer(dr, dc) {
+    if (!mazeActive)
+        return;
+    const next = { r: mazePlayer.r + dr, c: mazePlayer.c + dc };
+    if (!mazeOpen(next.r, next.c))
+        return;
+    mazePlayer = next;
+    mazeRunnerAngle = dc > 0 ? 0 : dc < 0 ? 180 : dr > 0 ? 90 : -90;
+    const key = mazeKey(next.r, next.c);
+    if (mazeDots.delete(key)) {
+        arcadeScore++;
+        document.getElementById('arcadeScore').textContent = arcadeScore;
+    }
+    checkMazeCollision();
+    renderMazeBoard();
+    if (arcadeScore >= MAZE_GOAL)
+        finishMazeGame(true);
+}
+function moveMazePatrols() {
+    if (!mazeActive)
+        return;
+    mazePatrols.forEach((patrol, patrolIndex) => {
+        const options = [[-1, 0], [1, 0], [0, -1], [0, 1]].map(([dr, dc]) => ({ r: patrol.r + dr, c: patrol.c + dc })).filter(pos => mazeOpen(pos.r, pos.c) && !mazePatrols.some((other, i) => i !== patrolIndex && other.r === pos.r && other.c === pos.c));
+        options.sort((a, b) => (Math.abs(a.r - mazePlayer.r) + Math.abs(a.c - mazePlayer.c)) - (Math.abs(b.r - mazePlayer.r) + Math.abs(b.c - mazePlayer.c)));
+        const next = Math.random() < .68 ? options[0] : options[Math.floor(Math.random() * options.length)];
+        if (next) {
+            patrol.r = next.r;
+            patrol.c = next.c;
+        }
+    });
+    checkMazeCollision();
+    renderMazeBoard();
+}
+function checkMazeCollision() {
+    if (!mazePatrols.some(patrol => patrol.r === mazePlayer.r && patrol.c === mazePlayer.c))
+        return;
+    mazeHits++;
+    arcadeScore = Math.max(0, arcadeScore - 2);
+    document.getElementById('arcadeScore').textContent = arcadeScore;
+    mazePlayer = { ...mazeStart };
+}
+function finishMazeGame(completed) {
+    if (!mazeActive)
+        return;
+    mazeActive = false;
+    clearInterval(arcadeInt);
+    clearInterval(arcadeSpawnInt);
+    const completion = Math.min(1, arcadeScore / MAZE_GOAL);
+    const speedBonus = completed ? Math.round((arcadeTimeLeft / 40) * 22) : 0;
+    performance.roadblock = Math.max(20, Math.min(100, Math.round(completion * 82 + speedBonus - mazeHits * 6)));
+    advanceClock(Math.round(26 - (performance.roadblock / 100) * 17));
+    finishRoadblock('arcade', arcadeScore);
+}
+document.addEventListener('keydown', event => {
+    if (!mazeActive)
+        return;
+    const moves = { ArrowUp: [-1, 0], ArrowDown: [1, 0], ArrowLeft: [0, -1], ArrowRight: [0, 1] };
+    if (!moves[event.key])
+        return;
+    event.preventDefault();
+    moveMazePlayer(...moves[event.key]);
+});
 function getRoadblockTheme(type) {
-    return type === 'arcade' ? currentLegData.roadblockThemes.arcade : getTaskTheme(type);
+    if (type !== 'arcade')
+        return getTaskTheme(type);
+    const base = currentLegData.roadblockThemes.arcade;
+    return {
+        ...base,
+        title: 'Neon Maze Chase',
+        taskEmoji: '🟡',
+        desc: 'Navigate a glowing 2D maze, collect 18 route dots and evade two moving patrols before the 40-second clock expires.',
+        winLine: 'threaded the neon maze cleanly, swept up the route dots and stayed ahead of both patrols.',
+        loseLine: 'made it through the neon maze, but the patrols forced several resets and left route dots scattered behind.'
+    };
 }
 function roadblockWinLoseLine(type, theme, good) {
     // Some themes have a roadblock-specific override (their Detour line carries its own subject and can't be prefixed).
@@ -4732,8 +4841,8 @@ function resolveMinigame(type, raw, score, timeCost, context) {
         finishRoadblock(type, raw);
     }
 }
-const ROADBLOCK_VISUAL_CODES = { arcade: 'HIT', reaction: 'TAP', rhythm: 'BPM', balance: 'HOLD', memory: 'SEQ', match: 'PAIR', gamble: 'SUM', language: 'LEX', code: 'CODE', forfeit: 'DNF' };
-const ROADBLOCK_VISUAL_LABELS = { arcade: 'Arcade challenge', reaction: 'Reaction drill', rhythm: 'Rhythm pattern', balance: 'Balance hold', memory: 'Sequence memory', match: 'Cultural pairs', gamble: 'Growing card sums', language: 'Phrase match', code: 'Code crack', forfeit: 'Roadblock forfeited' };
+const ROADBLOCK_VISUAL_CODES = { arcade: 'MAZE', reaction: 'TAP', rhythm: 'BPM', balance: 'HOLD', memory: 'SEQ', match: 'PAIR', gamble: 'SUM', language: 'LEX', code: 'CODE', forfeit: 'DNF' };
+const ROADBLOCK_VISUAL_LABELS = { arcade: 'Neon maze chase', reaction: 'Reaction drill', rhythm: 'Rhythm pattern', balance: 'Balance hold', memory: 'Sequence memory', match: 'Cultural pairs', gamble: 'Growing card sums', language: 'Phrase match', code: 'Code crack', forfeit: 'Roadblock forfeited' };
 function renderRoadblockResultCard(type, bigText, tag, good, forceFail) {
     const code = ROADBLOCK_VISUAL_CODES[type] || 'RB';
     const label = ROADBLOCK_VISUAL_LABELS[type] || 'Roadblock result';
@@ -4755,7 +4864,7 @@ function finishRoadblock(type, raw) {
         bigText = good ? `${who} pulled it off` : `${who} struggled through it`;
     }
     else if (type === 'arcade') {
-        bigText = `${who} scored ${raw} hits`;
+        bigText = `${who} collected ${raw} route dots`;
     }
     else if (type === 'reaction') {
         bigText = `${who}: ${raw} correct taps`;
@@ -5339,7 +5448,7 @@ function rollFastForward() {
     const btn = document.getElementById('checkpointBtn');
     const stamp = document.getElementById('checkpointPassStatus');
     if (fastForwardWon) {
-        playerElapsed -= 30;
+        playerElapsed = effectiveElapsed();
         hostLine.textContent = "Fast Forward awarded. Your team gains a 30-minute race-clock advantage.";
         if (stamp)
             stamp.textContent = 'Won\nPass';
@@ -5388,9 +5497,13 @@ function choosePitStopPace(pace) {
     const energyCost = pace ? scaledEnergyCost(pace.cost) : 0;
     if (!pace || energy < energyCost)
         return;
+    // Lock in every placement consequence earned before the final approach.
+    // The displayed pace time is the only arrival-time cost here; otherwise the
+    // sprint's large energy deduction can retroactively add up to 27 hidden minutes.
+    const elapsedBeforePace = effectiveElapsed();
     changeEnergy(-energyCost);
     advanceClock(pace.minutes);
-    playerElapsed = effectiveElapsed();
+    playerElapsed = elapsedBeforePace + pace.minutes;
     buildPitStop();
 }
 function buildPitStop() {
@@ -5637,6 +5750,81 @@ function continueFastForward() {
     done(); // no clue is revealed during this transition
 }
 /* ---------- FLIGHT READY CONFIRMATION ---------- */
+const DEPARTURE_BOARD_FILLERS = [
+    ['HELSINKI', 'AY', 25], ['DOHA', 'QR', 38], ['VANCOUVER', 'AC', 72],
+    ['ISTANBUL', 'TK', 105], ['AUCKLAND', 'NZ', 165], ['SEOUL', 'KE', 215]
+];
+let pendingDepartureBoardCallback = null;
+let departureBoardEarlyEligible = false;
+let scheduledEarlyDeparture = 0;
+let scheduledLaterDeparture = 0;
+function flightLaterDepartureDelay() {
+    const duration = estimatedIntercityFlightMinutes(currentLegData, nextLegData());
+    return duration <= 120 ? 90 : (duration <= 300 ? 150 : 240);
+}
+function formatDepartureTime(minutes) {
+    const normalized = ((Math.round(minutes / 5) * 5) % 1440 + 1440) % 1440;
+    return `${String(Math.floor(normalized / 60)).padStart(2, '0')}${String(normalized % 60).padStart(2, '0')}`;
+}
+function departureAirportLabel() {
+    return String(currentLegData.airportName || 'International Airport').replace(/International|Airport|Kingsford Smith|Capital/gi, '').trim().toUpperCase() || 'INTERNATIONAL';
+}
+function showFlightDeparturesBoard(callback) {
+    const destinationLeg = nextLegData();
+    if (!destinationLeg) {
+        callback();
+        return;
+    }
+    pendingDepartureBoardCallback = callback;
+    departureBoardEarlyEligible = ['ridehail', 'car'].includes(lastCompletedTravelMode);
+    const arrival = Math.ceil(clockMinutes / 5) * 5;
+    scheduledEarlyDeparture = arrival + 50;
+    scheduledLaterDeparture = scheduledEarlyDeparture + flightLaterDepartureDelay();
+    const destination = String(destinationLeg.cityName || destinationLeg.countryFull).toUpperCase();
+    const legIndex = Math.max(0, currentLegData.legNumber - 1);
+    const targetNumber = 600 + ((legIndex + 1) * 17);
+    const rows = [
+        { time: scheduledEarlyDeparture, flight: `IR${targetNumber}`, destination, status: 'LAST SEATS', target: true },
+        { time: scheduledLaterDeparture, flight: `IR${targetNumber + 4}`, destination, status: 'AVAILABLE', target: true, later: true },
+        ...DEPARTURE_BOARD_FILLERS.map(([city, airline, offset], index) => ({
+            time: arrival + offset,
+            flight: `${airline}${210 + ((legIndex * 37 + index * 53) % 760)}`,
+            destination: city,
+            status: offset <= 38 ? 'BOARDING' : (offset <= 72 ? 'ON TIME' : 'SCHEDULED')
+        }))
+    ].sort((a, b) => a.time - b.time);
+    document.getElementById('departuresAirportCode').textContent = departureAirportLabel();
+    document.getElementById('departuresRows').innerHTML = rows.map(row => `<div class="departure-row${row.target ? ' target-flight' : ''}"><span>${formatDepartureTime(row.time)}</span><span>${escapeHTML(row.flight)}</span><span class="departure-destination">${escapeHTML(row.destination)}</span><span class="departure-status${row.later ? ' later' : ''}">${escapeHTML(row.status)}</span></div>`).join('');
+    document.getElementById('departuresRouteTitle').textContent = `${formatDepartureTime(scheduledEarlyDeparture)} or ${formatDepartureTime(scheduledLaterDeparture)} to ${destinationLeg.cityName}`;
+    const eligibility = document.getElementById('departuresEligibilityText');
+    const button = document.getElementById('departuresContinueBtn');
+    if (departureBoardEarlyEligible) {
+        eligibility.innerHTML = `Your fast airport transfer gets you there in time to fight for the <b>${formatDepartureTime(scheduledEarlyDeparture)}</b> flight's final pair of seats. Lose the sprint and you take the <b>${formatDepartureTime(scheduledLaterDeparture)}</b>.`;
+        button.textContent = 'Go to the Counter · Race for Early Seats →';
+    }
+    else {
+        eligibility.innerHTML = `After arriving by ${lastCompletedTravelMode || 'ground transport'}, check-in for the <b>${formatDepartureTime(scheduledEarlyDeparture)}</b> has closed. Your team is confirmed on the <b>${formatDepartureTime(scheduledLaterDeparture)}</b> flight.`;
+        button.textContent = `Take the ${formatDepartureTime(scheduledLaterDeparture)} Flight →`;
+    }
+    document.getElementById('flightDeparturesOverlay').style.display = 'flex';
+}
+function continueFromDepartureBoard() {
+    document.getElementById('flightDeparturesOverlay').style.display = 'none';
+    if (departureBoardEarlyEligible) {
+        const callback = pendingDepartureBoardCallback;
+        pendingDepartureBoardCallback = null;
+        if (callback)
+            callback();
+        return;
+    }
+    pendingDepartureBoardCallback = null;
+    watchedEntertainmentIndices.clear();
+    chosenFlightType = 'late';
+    earlyFlightWinnerName = null;
+    pendingFlightTravelTime = estimatedIntercityFlightMinutes(currentLegData, nextLegData());
+    advanceClock(flightLaterDepartureDelay());
+    showSeatingPlan();
+}
 const COUNTER_AGENTS = [
     { name: 'Priya', art: 'female', line: "Two seats? Let me see what's actually left on tonight's departures." },
     { name: 'Kenji', art: 'male', line: "You're the fourth team through here in ten minutes. Everyone wants the same flight." },
@@ -5769,7 +5957,7 @@ function finishFlightRace(winnerIndex) {
     chosenFlightType = playerWon ? 'early' : 'late';
     const destinationLeg = nextLegData();
     pendingFlightTravelTime = estimatedIntercityFlightMinutes(currentLegData, destinationLeg);
-    const laterDepartureDelay = pendingFlightTravelTime <= 120 ? 90 : (pendingFlightTravelTime <= 300 ? 150 : 240);
+    const laterDepartureDelay = flightLaterDepartureDelay();
     if (!playerWon)
         advanceClock(laterDepartureDelay);
     earlyFlightWinnerName = playerWon ? null : winner.team.name;
@@ -5972,6 +6160,7 @@ function showFlightDepartureCountdown(callback) {
     }, 3400));
 }
 function proceedToFlight() {
+    inflightServiceCompleted = false;
     // Must track seatUpchargeFor()'s tiers, or a player can pay top price for row 5
     // and then be told they're at the very back.
     const rowQuality = selectedSeatRow <= 6 ? 'front' : (selectedSeatRow <= 16 ? 'middle' : 'back');
@@ -6028,7 +6217,7 @@ function flightChatSceneMarkup() {
     </div>`;
 }
 function inFlightActivityMinutes(activity) {
-    return Math.min(activity.saved || 0, Math.max(30, pendingFlightTravelTime - 30));
+    return activity.saved || 0;
 }
 function inFlightActivityEnergy(activity, minutes) {
     if (!activity.saved || !activity.energyGain)
@@ -6038,17 +6227,25 @@ function inFlightActivityEnergy(activity, minutes) {
 function showInFlightActivities() {
     const wrap = document.getElementById('inflightOptions');
     wrap.innerHTML = '';
+    const hostLine = document.getElementById('inflightHostLine');
+    if (hostLine)
+        hostLine.innerHTML = `<b>${formatRuntime(pendingFlightTravelTime)}</b> remains in the air. Nap and chat as often as time allows; each programme can only be watched once.`;
     Object.keys(INFLIGHT_ACTIVITIES).forEach(key => {
         const act = INFLIGHT_ACTIVITIES[key];
         const btn = document.createElement('button');
         btn.className = 'flight-activity-card';
         const activityMinutes = key === 'entertainment' ? 0 : inFlightActivityMinutes(act);
         const activityEnergy = key === 'entertainment' ? 0 : inFlightActivityEnergy(act, activityMinutes);
-        const hint = key === 'entertainment' ? act.hint : `Skip ${formatRuntime(activityMinutes)} &middot; +${activityEnergy} energy`;
+        const available = key === 'entertainment' ? hasAvailableEntertainment() : pendingFlightTravelTime >= activityMinutes;
+        const hint = available ? (key === 'entertainment' ? act.hint : `Spend ${formatRuntime(activityMinutes)} &middot; +${activityEnergy} energy`) : (key === 'entertainment' ? 'No unwatched programme fits' : `Needs ${formatRuntime(activityMinutes)}`);
         btn.innerHTML = `<span class="flight-activity-icon">${act.icon}</span><span class="flight-activity-name">${act.title}</span><span class="flight-activity-time">${hint}</span>`;
+        btn.disabled = !available;
         btn.onclick = () => key === 'entertainment' ? showEntertainmentHub() : chooseInFlightActivity(key, 0);
         wrap.appendChild(btn);
     });
+    const finishBtn = document.getElementById('inflightFinishBtn');
+    if (finishBtn)
+        finishBtn.textContent = `Finish Activities · ${formatRuntime(pendingFlightTravelTime)} remains`;
     showScreen('screen-inflight');
 }
 function chooseInFlightActivity(key, cost) {
@@ -6058,10 +6255,13 @@ function chooseInFlightActivity(key, cost) {
         updateStatusBar();
     }
     const activityMinutes = inFlightActivityMinutes(act);
+    if (activityMinutes > pendingFlightTravelTime)
+        return;
+    pendingFlightTravelTime = Math.max(0, pendingFlightTravelTime - activityMinutes);
+    advanceClock(activityMinutes);
     changeEnergy(inFlightActivityEnergy(act, activityMinutes));
-    const remaining = Math.max(30, pendingFlightTravelTime - activityMinutes);
     showFlightNarration(act.text(), () => {
-        showMealService(remaining);
+        completeInFlightAction();
     }, act.scene, act.sceneClass);
 }
 const ENTERTAINMENT_LIBRARY = [
@@ -6078,10 +6278,36 @@ const ENTERTAINMENT_LIBRARY = [
 let selectedEntertainmentIndex = null;
 let entertainmentCategory = 'Movies';
 const watchedEntertainmentIndices = new Set();
+let inflightServiceCompleted = false;
+function hasAvailableEntertainment() {
+    return ENTERTAINMENT_LIBRARY.some((item, index) => !watchedEntertainmentIndices.has(index) && item.runtime <= pendingFlightTravelTime);
+}
+function hasAvailableInFlightActivity() {
+    return pendingFlightTravelTime >= INFLIGHT_ACTIVITIES.chat.saved || pendingFlightTravelTime >= INFLIGHT_ACTIVITIES.nap.saved || hasAvailableEntertainment();
+}
+function completeInFlightAction() {
+    if (!inflightServiceCompleted) {
+        showMealService(pendingFlightTravelTime);
+        return;
+    }
+    if (hasAvailableInFlightActivity())
+        showInFlightActivities();
+    else
+        finishInFlightActivities();
+}
+function finishInFlightActivities() {
+    const remaining = Math.max(0, pendingFlightTravelTime);
+    pendingFlightTravelTime = 0;
+    if (remaining === 0) {
+        onFlightComplete();
+        return;
+    }
+    startClockFastForward(remaining, 'Somewhere Over the Horizon', 'The flight carries on, hour after hour.', onFlightComplete);
+}
 function showEntertainmentHub() {
     selectedEntertainmentIndex = null;
     const finish = document.getElementById('finishEntertainmentBtn');
-    finish.textContent = `Continue · ${formatRuntime(pendingFlightTravelTime)} remains`;
+    finish.textContent = `Back to Activities · ${formatRuntime(pendingFlightTravelTime)} remains`;
     showScreen('screen-entertainment');
 }
 function showEntertainmentLibrary(category) {
@@ -6091,7 +6317,7 @@ function showEntertainmentLibrary(category) {
     tabs.innerHTML = ['Movies', 'Shows', 'Channels'].map(kind => `<button class="ent-tab${kind === entertainmentCategory ? ' active' : ''}" onclick="filterEntertainment('${kind}')">${kind}</button>`).join('');
     renderEntertainmentRail();
     document.getElementById('watchEntertainmentBtn').style.display = 'none';
-    document.getElementById('finishEntertainmentBtn').textContent = `Continue · ${formatRuntime(pendingFlightTravelTime)} remains`;
+    document.getElementById('finishEntertainmentBtn').textContent = `Back to Activities · ${formatRuntime(pendingFlightTravelTime)} remains`;
     showScreen('screen-entertainment-catalog');
 }
 function filterEntertainment(category) {
@@ -6128,11 +6354,12 @@ function watchSelectedEntertainment() {
     const item = ENTERTAINMENT_LIBRARY[selectedEntertainmentIndex];
     const remaining = Math.max(0, pendingFlightTravelTime - item.runtime);
     pendingFlightTravelTime = remaining;
+    advanceClock(item.runtime);
     watchedEntertainmentIndices.add(selectedEntertainmentIndex);
     changeEnergy(8);
-    showFlightNarration(`<b>${item.title}</b> &middot; ${item.narration}<br><br><span class="ent-watch-time">${formatRuntime(item.runtime)} passes in the air.</span>`, () => remaining >= 30 ? showEntertainmentLibrary(item.kind) : showMealService(remaining), '', 'scene-entertainment', item.posterPosition);
+    showFlightNarration(`<b>${item.title}</b> &middot; ${item.narration}<br><br><span class="ent-watch-time">${formatRuntime(item.runtime)} passes in the air.</span>`, completeInFlightAction, '', 'scene-entertainment', item.posterPosition);
 }
-function finishEntertainment() { showMealService(Math.max(0, pendingFlightTravelTime)); }
+function finishEntertainment() { showInFlightActivities(); }
 /* ---------- FLIGHT ATTENDANT SERVICE ---------- */
 let pendingRemainingFlightTime = 0;
 function emojiForMeal(name) {
@@ -6233,7 +6460,12 @@ function showDrinkService() {
     showScreen('screen-flightservice');
 }
 function finishFlightService() {
-    startClockFastForward(pendingRemainingFlightTime, 'Somewhere Over the Horizon', 'The flight carries on, hour after hour.', onFlightComplete);
+    inflightServiceCompleted = true;
+    pendingFlightTravelTime = pendingRemainingFlightTime;
+    if (hasAvailableInFlightActivity())
+        showInFlightActivities();
+    else
+        finishInFlightActivities();
 }
 function showFlightNarration(text, callback, sceneEmoji, sceneClass, artworkPosition) {
     if (document.getElementById('flightNarrationOverlay').style.display === 'flex')
@@ -6285,13 +6517,26 @@ function onFlightComplete() {
     if (currentLegData.legNumber < LEG_SEQUENCE.length) {
         const next = nextLegData();
         const overlay = document.getElementById('touchdownOverlay');
+        overlay.classList.remove('cash-phase');
+        document.getElementById('touchdownPhase').textContent = 'Arrival Confirmed';
         document.getElementById('touchdownCopy').textContent = `Touchdown · ${next.cityName}`;
         overlay.style.display = 'flex';
         requestAnimationFrame(() => overlay.classList.add('show'));
         setTimeout(() => {
-            startNextLeg();
-            document.getElementById('touchdownCopy').textContent = `Cash converted · ${currentLegData.currencySymbol}${budget.toLocaleString()}`;
-            setTimeout(() => { overlay.classList.remove('show'); setTimeout(() => overlay.style.display = 'none', 760); }, 1100);
+            try {
+                startNextLeg();
+                overlay.classList.add('cash-phase');
+                document.getElementById('touchdownPhase').textContent = 'Race Funds Updated';
+                document.getElementById('touchdownCopy').textContent = `Cash converted · ${currentLegData.currencySymbol}${budget.toLocaleString()}`;
+            }
+            catch (error) {
+                console.error('[touchdown] next-leg transition failed', error);
+                document.getElementById('touchdownPhase').textContent = 'Arrival Recovery';
+                document.getElementById('touchdownCopy').textContent = `Welcome to ${next.cityName}`;
+            }
+            finally {
+                setTimeout(() => { overlay.classList.remove('show'); setTimeout(() => { overlay.style.display = 'none'; overlay.classList.remove('cash-phase'); }, 760); }, 1100);
+            }
         }, 1300);
     }
     else {
@@ -6495,7 +6740,7 @@ startCinematicIntro();
    The migrated app uses an ES module, while the preserved Build 35 markup still
    calls these functions from inline event attributes. Exposing only this audited
    list keeps all existing controls working without altering game behavior. */
-const __legacyHandlerNames = ["applyTaskForfeit", "arriveAtCheckpoint", "askTrainStranger", "chooseForfeitPenalty", "closeForfeitOverlay", "closeYieldTeamPicker", "confirmBusSeat", "confirmFlightReady", "confirmForfeitIntent", "confirmPartner", "confirmSeat", "continueFastForward", "continueFlightNarration", "continueFlightRace", "continueFromCompletedTask", "continueIncomingYield", "continueRPSRoadblock", "continueRaceEvent", "continueRouteInfo", "continueTaskClue", "continueTravel", "filterEntertainment", "finishEntertainment", "goToRoute1", "goToRoute2", "goToYieldLandmark", "openPendingClueBox", "openRPS", "openTaskClueBox", "openTaskForfeit", "openYieldTeamPicker", "playRPS", "prepRoadblock", "proceedToFlight", "resetLanguageAttempt", "restartProto", "resumeGame", "returnToForfeitFirstConfirmation", "returnToForfeitPenaltyChoice", "returnToTransportOptions", "rollFastForward", "selectEntertainment", "showConferScreen", "showEntertainmentHub", "showEntertainmentLibrary", "showInFlightActivities", "showStartingAirportDepartureClue", "skipCinematicIntro", "skipYield", "startDetourGame", "startFastForwardTime", "startIncomingYieldTimer", "startNewRace", "submitCodeGuess", "tapFlightRun", "tapRhythmLane", "toggleMusic", "updateSetupPreview", "updateTrainTipDisplay", "watchSelectedEntertainment"];
+const __legacyHandlerNames = ["applyTaskForfeit", "arriveAtCheckpoint", "askTrainStranger", "chooseForfeitPenalty", "closeForfeitOverlay", "closeYieldTeamPicker", "confirmBusSeat", "confirmFlightReady", "confirmForfeitIntent", "confirmPartner", "confirmSeat", "continueFastForward", "continueFlightNarration", "continueFlightRace", "continueFromCompletedTask", "continueFromDepartureBoard", "continueIncomingYield", "continueRPSRoadblock", "continueRaceEvent", "continueRouteInfo", "continueTaskClue", "continueTravel", "filterEntertainment", "finishEntertainment", "goToRoute1", "goToRoute2", "goToYieldLandmark", "moveMazePlayer", "openPendingClueBox", "openRPS", "openTaskClueBox", "openTaskForfeit", "openYieldTeamPicker", "playRPS", "prepRoadblock", "proceedToFlight", "resetLanguageAttempt", "restartProto", "resumeGame", "returnToForfeitFirstConfirmation", "returnToForfeitPenaltyChoice", "returnToTransportOptions", "rollFastForward", "selectEntertainment", "showConferScreen", "showEntertainmentHub", "showEntertainmentLibrary", "showInFlightActivities", "showStartingAirportDepartureClue", "skipCinematicIntro", "skipYield", "startDetourGame", "startFastForwardTime", "startIncomingYieldTimer", "startNewRace", "submitCodeGuess", "tapFlightRun", "tapRhythmLane", "toggleMusic", "updateSetupPreview", "updateTrainTipDisplay", "watchSelectedEntertainment"];
 for (const __handlerName of __legacyHandlerNames) {
     try {
         const __handler = eval(__handlerName);
