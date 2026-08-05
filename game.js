@@ -651,7 +651,7 @@ const LOCATION_ART = {
     generic: 'https://eddmooresalt.github.io/incredible-race/assets/generated/art-cc1b707028f414c2.webp',
     'mexico-zocalo': 'https://eddmooresalt.github.io/incredible-race/assets/generated/art-84dda7a2ea7772c5.webp',
     'mexico-xochimilco': 'https://eddmooresalt.github.io/incredible-race/assets/generated/art-6fb42ab2f378a0a0.webp',
-    'mexico-coyoacan': 'https://eddmooresalt.github.io/incredible-race/assets/generated/art-7307b62e7f7f97fa.webp',
+    'mexico-coyoacan': 'assets/generated/mexico-coyoacan-build60b.png',
     'mexico-chapultepec': 'https://eddmooresalt.github.io/incredible-race/assets/generated/art-1742cb2d4447ce50.webp',
     'rio-selaron': 'https://eddmooresalt.github.io/incredible-race/assets/generated/art-d48f95528983c188.webp',
     'rio-sugarloaf': 'https://eddmooresalt.github.io/incredible-race/assets/generated/art-060aaece382f330c.webp',
@@ -666,7 +666,7 @@ const LOCATION_ART = {
     'jaipur-amber-fort': 'https://eddmooresalt.github.io/incredible-race/assets/generated/art-38e643f51896f1bc.webp',
     'jaipur-jal-mahal': 'https://eddmooresalt.github.io/incredible-race/assets/generated/art-8ca1f56ac8f24cfe.webp',
     'sydney-circular-quay': 'https://incredible-race-sydney-assets-ffpdhx5x1-edds-projects-7eb05871.vercel.app/sydney-circular-quay.webp',
-    'sydney-bondi': 'https://incredible-race-sydney-assets-dx3cmurqp-edds-projects-7eb05871.vercel.app/sydney-bondi.webp',
+    'sydney-bondi': 'assets/generated/sydney-bondi-build61.png',
     'sydney-harbour-bridge': 'https://incredible-race-sydney-assets-aqsn9s67q-edds-projects-7eb05871.vercel.app/sydney-harbour-bridge.webp',
     'sydney-opera-house': 'https://incredible-race-sydney-assets-n9a8op6pv-edds-projects-7eb05871.vercel.app/sydney-opera-house.webp'
 };
@@ -1157,12 +1157,6 @@ function shuffledCopy(items) {
 }
 function raceLocationCopy(location) {
     const copy = { ...location, banner: location.banner ? { ...location.banner } : location.banner };
-    // Yield-only landmarks did not previously need rail metadata. Once roles can
-    // rotate, give every rail-accessible landmark a valid line for transport logic.
-    if (!copy.noTrain && typeof copy.correctTrainIndex !== 'number') {
-        const placeHash = [...String(copy.place)].reduce((sum, char) => sum + char.codePointAt(0), 0);
-        copy.correctTrainIndex = placeHash % 3;
-    }
     return copy;
 }
 function buildRaceLeg(baseLeg, savedRoles, randomizeRoles) {
@@ -2270,6 +2264,56 @@ const RIDE_HAIL_APPS = {
     'JAIPUR': 'Ola', 'SYDNEY': 'Uber'
 };
 function currentRideHailApp() { return RIDE_HAIL_APPS[currentLegData.countryTag] || 'Ride-Hail'; }
+// Verified landmark-level rail access. Race roles rotate; geography does not.
+// No entry means rail does not reach the checkpoint closely enough to be sold
+// as a direct train option in the game.
+const LANDMARK_RAIL = {
+    'Haneda Airport': ['Keikyu Airport Line — Haneda Airport terminals', 'Tokyo Monorail — Haneda Airport terminals'],
+    'Changi Airport': ['East-West Line airport branch — Changi Airport Station'],
+    'Suvarnabhumi Airport': ['Airport Rail Link — Suvarnabhumi Station'],
+    'Beijing Capital International Airport': ['Capital Airport Express — Terminals 2/3'],
+    'Leonardo da Vinci–Fiumicino Airport': ['Leonardo Express — Fiumicino Aeroporto Station', 'FL1 regional rail — Fiumicino Aeroporto Station'],
+    'Kuala Lumpur International Airport': ['KLIA Ekspres — KLIA terminals', 'KLIA Transit — KLIA terminals'],
+    'Mexico City International Airport': ['Mexico City Metro Line 5 — Terminal Aérea Station'],
+    'Sydney Kingsford Smith Airport': ['Sydney Trains T8 Airport & South Line — International/Domestic Airport stations'],
+    'Tsukiji Outer Market': ['Tokyo Metro Hibiya Line — Tsukiji Station'],
+    'Akihabara Arcade': ['Tokyo Metro Hibiya Line — Akihabara Station', 'JR Yamanote Line — Akihabara Station'],
+    'Tokyo Tower': ['Tokyo Metro Hibiya Line — Kamiyacho Station', 'Toei Oedo Line — Akabanebashi Station'],
+    'Shibuya Crossing': ['Tokyo Metro Ginza Line — Shibuya Station', 'JR Yamanote Line — Shibuya Station'],
+    'Chinatown Complex Market': ['North East Line — Chinatown Station', 'Downtown Line — Chinatown Station'],
+    'Gardens by the Bay': ['Thomson-East Coast Line — Gardens by the Bay Station'],
+    'Marina Bay Sands': ['Downtown Line — Bayfront Station', 'Circle Line — Bayfront Station'],
+    'Merlion Park': ['East-West Line — Raffles Place Station', 'North-South Line — Raffles Place Station'],
+    'Wat Arun (Temple of Dawn)': ['MRT Blue Line — Itsaraphap Station'],
+    'Chatuchak Weekend Market': ['MRT Blue Line — Kamphaeng Phet Station', 'BTS Sukhumvit Line — Mo Chit Station'],
+    'Grand Palace': ['MRT Blue Line — Sanam Chai Station'],
+    'Wat Pho': ['MRT Blue Line — Sanam Chai Station'],
+    'Temple of Heaven': ['Beijing Subway Line 5 — Tiantandongmen Station', 'Beijing Subway Line 8 — Tianqiao Station'],
+    'Badaling Great Wall': ['Beijing Suburban Railway S2 — Badaling Station', 'Beijing–Zhangjiakou high-speed rail — Badaling Great Wall Station'],
+    'Forbidden City': ['Beijing Subway Line 8 — Jinyu Hutong Station'],
+    'Tiananmen Square': ['Beijing Subway Line 2 — Qianmen Station'],
+    'The Colosseum': ['Rome Metro Line B — Colosseo Station'],
+    'Trevi Fountain': ['Rome Metro Line A — Barberini–Fontana di Trevi Station'],
+    'Spanish Steps': ['Rome Metro Line A — Spagna Station'],
+    'Petronas Twin Towers': ['LRT Kelana Jaya Line — KLCC Station'],
+    'Batu Caves': ['KTM Komuter Batu Caves–Pulau Sebang Line — Batu Caves Station'],
+    'Merdeka Square': ['LRT Kelana Jaya Line — Masjid Jamek Station'],
+    'Central Market': ['LRT Kelana Jaya Line — Pasar Seni Station', 'MRT Kajang Line — Pasar Seni Station'],
+    'Zócalo': ['Mexico City Metro Line 2 — Zócalo/Tenochtitlan Station'],
+    'Xochimilco Canals': ['Tren Ligero — Xochimilco Station'],
+    'Mercado de Coyoacán': ['Mexico City Metro Line 3 — Viveros/Derechos Humanos Station'],
+    'Chapultepec Castle': ['Mexico City Metro Line 1 — Chapultepec Station'],
+    'Escadaria Selarón': ['MetrôRio Lines 1/2 — Glória Station'],
+    'Arcos da Lapa': ['MetrôRio Lines 1/2 — Cinelândia Station'],
+    'Hawa Mahal': ['Jaipur Metro Pink Line — Badi Chaupar Station'],
+    'Johari Bazaar': ['Jaipur Metro Pink Line — Badi Chaupar Station'],
+    'Circular Quay': ['Sydney Trains T2/T3/T8 — Circular Quay Station'],
+    'Sydney Harbour Bridge': ['Sydney Trains T1 North Shore Line — Milsons Point Station'],
+    'Sydney Opera House': ['Sydney Trains T2/T3/T8 — Circular Quay Station']
+};
+function railServicesFor(location) {
+    return [...(LANDMARK_RAIL[String(location && location.place || '')] || [])];
+}
 function buildTransportModes() {
     return [
         { key: 'bus', label: 'Bus', emoji: '🚌', cost: fareFor('bus'), time: 70, score: 8 },
@@ -2352,7 +2396,7 @@ function showTransport(screenId, prefix, destLabel, nextScreenId) {
     // labelled), the banner is hidden during transport selection entirely, and only
     // reappears once resolveTravelContinuation() confirms actual arrival.
     clearLandmarkBanner();
-    const noTrain = !!currentLegData[destKey].noTrain;
+    const noTrain = railServicesFor({ place: destLabel }).length === 0;
     const area = document.getElementById(prefix + 'Options');
     area.classList.add('transport-options');
     area.innerHTML = '';
@@ -2730,7 +2774,39 @@ function showCarChoices(baseMode, destLabel, nextScreenId) {
     showScreen('screen-transport-sub');
 }
 /* ---------- TRAIN SUB-CHOICE (one factually-correct line, wrong ones cost time) ---------- */
+function showVerifiedTrainLines(baseMode, destLabel, nextScreenId, destKey) {
+    const names = railServicesFor({ place: destLabel });
+    if (!names.length) {
+        showTransport(activeTransportContext.screenId, activeTransportContext.prefix, destLabel, nextScreenId);
+        return;
+    }
+    activeTrainAdvice = null;
+    document.getElementById('subChoiceEyebrow').textContent = 'Verified Rail Access';
+    document.getElementById('subChoiceHeadline').innerHTML = names.length > 1 ? 'Choose a <em>Real Route</em>' : 'Take the <em>Verified Route</em>';
+    document.getElementById('subChoiceHostLine').textContent = `These services reach the station used for ${destLabel}. No invented direct line or wrong-line penalty.`;
+    document.getElementById('trainStrangerPanel').style.display = 'none';
+    document.getElementById('trainLinesDivider').style.display = 'none';
+    const area = document.getElementById('subChoiceOptions');
+    area.innerHTML = '';
+    names.forEach(name => {
+        const el = document.createElement('div');
+        el.className = 'card choice-card transport-choice-card';
+        el.innerHTML = `<div class="transport-icon-tile">🚆</div><div class="transport-card-copy"><div class="transport-card-title">${escapeHTML(name)}</div><div class="transport-card-meta">${currentLegData.currencySymbol}${baseMode.cost.toLocaleString()} ticket · ~${baseMode.time} min</div></div><div class="transport-card-chevron">›</div>`;
+        el.onclick = () => {
+            if (budget < baseMode.cost)
+                return;
+            budget -= baseMode.cost;
+            advanceClock(baseMode.time);
+            updateStatusBar();
+            const narration = `You take the ${name}, a verified rail service for ${destLabel}, then complete the final approach from the station.`;
+            startTravelNarration(narration, '🚆', nextScreenId, false, null, 'train');
+        };
+        area.appendChild(el);
+    });
+    showScreen('screen-transport-sub');
+}
 function showTrainLines(baseMode, destLabel, nextScreenId, destKey) {
+    return showVerifiedTrainLines(baseMode, destLabel, nextScreenId, destKey);
     const names = currentLegData.trainLines;
     const configuredIdx = currentLegData[destKey] && currentLegData[destKey].correctTrainIndex;
     const correctIdx = Number.isInteger(configuredIdx) ? configuredIdx : Math.floor(Math.random() * names.length);
@@ -2738,7 +2814,7 @@ function showTrainLines(baseMode, destLabel, nextScreenId, destKey) {
     const stranger = TRAIN_STRANGERS[Math.floor(Math.random() * TRAIN_STRANGERS.length)];
     activeTrainAdvice = { stranger, names: [...names], correctIdx, correctName, asked: false, advisedIdx: null, tip: 0, ticketCost: baseMode.cost };
     document.getElementById('subChoiceEyebrow').textContent = 'Choose Your Line';
-    document.getElementById('subChoiceHeadline').innerHTML = 'Only One Goes <em>Where You Need</em>';
+    document.getElementById('subChoiceHeadline').innerHTML = 'Choose a <em>Verified Route</em>';
     document.getElementById('subChoiceHostLine').textContent = `Tickets cost ${currentLegData.currencySymbol}${baseMode.cost.toLocaleString()}. Only one line goes straight to ${destLabel}. Ask a local—or trust yourself.`;
     const panel = document.getElementById('trainStrangerPanel');
     document.getElementById('trainStrangerPhoto').src = TRAIN_STRANGER_ART[stranger.id];
@@ -2840,7 +2916,7 @@ function buildNarrationText(modeKey, lineName, destLabel, note, correctName) {
     }
     else if (modeKey === 'train') {
         if (note === 'wrongLine') {
-            text = `Wrong line. You backtrack at the next stop, then take the ${correctName} toward ${destLabel}.`;
+            text = `The route changes at the next interchange before continuing toward ${destLabel}.`;
         }
         else {
             text = `The ${lineName} is correct and carries you straight toward ${destLabel}.`;
@@ -2870,7 +2946,8 @@ function resolveTravelContinuation(nextScreenId) {
         // Travel is finished, so the banner can now claim arrival at that location.
         if (nextScreenId === 'screen-detour') {
             setLandmarkBanner(currentLegData.dest1, 'Detour');
-            showTaskClue('Detour', currentLegData.dest1, () => showRaceEvent(() => showScreen('screen-detour')));
+            // Resolve the random event before the racers begin their clue-box approach.
+            showRaceEvent(() => showTaskClue('Detour', currentLegData.dest1, () => showScreen('screen-detour')));
         }
         else if (nextScreenId === 'screen-roadblock-intro') {
             setLandmarkBanner(currentLegData.dest2, 'Roadblock');
@@ -2902,6 +2979,7 @@ function startTravelNarration(text, emoji, nextScreenId, isWrongLine, directCall
     const interior = document.getElementById('travelInteriorBanner');
     const emojiScene = document.getElementById('travelEmojiScene');
     const showInterior = ['train', 'bus', 'car', 'ridehail'].includes(modeKey);
+    emojiScene.classList.toggle('walk-art', modeKey === 'walk');
     interior.style.display = showInterior ? 'block' : 'none';
     emojiScene.style.display = showInterior ? 'none' : 'block';
     if (showInterior) {
@@ -3297,7 +3375,7 @@ function advanceSlurp() {
 }
 /* ---------- RHYTHM RUN (four-lane timing task) ---------- */
 const RHYTHM_NOTE_COUNT = 28;
-const RHYTHM_TRAVEL_MS = 2100;
+const RHYTHM_TRAVEL_MS = 2700;
 const RHYTHM_TARGET_PROGRESS = .84;
 let rhythmContext = 'detour', rhythmNotes = [], rhythmSpawned = 0, rhythmPoints = 0, rhythmCombo = 0, rhythmMissCount = 0;
 let rhythmSpawnTimer = null, rhythmRaf = null, rhythmFinished = false;
@@ -3324,7 +3402,7 @@ function startRhythm(context) {
             return;
         document.getElementById('rhythmFeedback').textContent = 'Fit the Arrow in the Gold Target';
         spawnRhythmNote();
-        rhythmSpawnTimer = setInterval(spawnRhythmNote, 470);
+        rhythmSpawnTimer = setInterval(spawnRhythmNote, 540);
         rhythmRaf = requestAnimationFrame(updateRhythmNotes);
     }, 650);
 }
@@ -3350,7 +3428,8 @@ function updateRhythmNotes(now) {
         if (note.resolved)
             return;
         note.progress = (Date.now() - note.spawnedAt) / RHYTHM_TRAVEL_MS;
-        note.el.style.top = `${-46 + note.progress * 340}px`;
+        const travelDistance = document.getElementById('rhythmStage').clientHeight + 10;
+        note.el.style.top = `${-46 + note.progress * travelDistance}px`;
         if (note.progress > 1.02)
             registerRhythmMiss(note);
     });
@@ -5865,10 +5944,32 @@ const INFLIGHT_ACTIVITIES = {
         title: 'Watch', icon: '🎬', hint: 'Pick a runtime', cost: 0
     },
     chat: {
-        title: 'Chat', icon: '💬', hint: 'Skip 45 min · +5 energy', saved: 45, energyGain: 5, cost: 0, scene: '💬', sceneClass: 'scene-chat',
+        title: 'Chat', icon: '💬', hint: 'Skip 45 min · +5 energy', saved: 45, energyGain: 5, cost: 0, scene: '', sceneClass: 'scene-chat',
         text: () => `You and ${partnerFirstName()} talk for hours — strategy first, then increasingly unhinged tangents about the other teams, then a genuinely heated debate about whether the Detour back in the last leg was rigged. You land knowing each other considerably better, and slightly more tired for it.`
     },
 };
+const INFLIGHT_CHAT_TOPICS = [
+    ["Which team do you think is secretly the strongest?", "The quiet one. It is always the quiet one."],
+    ["First meal after this leg — what are you ordering?", "Anything that does not arrive on a plastic tray."],
+    ["Would you have chosen the other Detour?", "Ask me again after we see the results board."],
+    ["If we win, where are we going without a clue envelope?", "Somewhere with room service and absolutely no running."],
+    ["Do you think the camera caught that wrong turn?", "Every second of it. Probably from three angles."],
+    ["Window seat next flight?", "Only if you promise not to wake me for clouds."],
+    ["Who would survive longest without their backpack?", "Not us. Our snacks are in there."],
+    ["Are we actually getting better at this?", "We are getting faster at pretending we have a plan."]
+];
+function flightChatSceneMarkup() {
+    const topic = INFLIGHT_CHAT_TOPICS[Math.floor(Math.random() * INFLIGHT_CHAT_TOPICS.length)];
+    const player = renderRacerAvatar(playerGender, playerTone, playerCostume);
+    const partner = renderRacerAvatar(partnerGender, partnerTone, partnerCostume);
+    return `<div class="inflight-chat-scene">
+      <div class="inflight-chat-shade"></div>
+      <div class="inflight-chat-racer player">${player}<span>You</span></div>
+      <div class="inflight-chat-racer partner">${partner}<span>${escapeHTML(partnerFirstName())}</span></div>
+      <div class="inflight-speech player-line">${escapeHTML(topic[0])}</div>
+      <div class="inflight-speech partner-line">${escapeHTML(topic[1])}</div>
+    </div>`;
+}
 function inFlightActivityMinutes(activity) {
     return Math.min(activity.saved || 0, Math.max(30, pendingFlightTravelTime - 30));
 }
@@ -6086,7 +6187,8 @@ function showFlightNarration(text, callback, sceneEmoji, sceneClass, artworkPosi
     const sceneWrap = document.getElementById('flightSceneWrap');
     const artworkEl = document.getElementById('flightNarrationArtwork');
     const customNapScene = sceneClass === 'scene-nap';
-    const usedEmoji = artworkPosition || customNapScene ? '' : (sceneEmoji || '');
+    const customChatScene = sceneClass === 'scene-chat';
+    const usedEmoji = artworkPosition || customNapScene || customChatScene ? '' : (sceneEmoji || '');
     sceneEl.className = 'route-emoji';
     if (sceneClass)
         sceneEl.classList.add(sceneClass);
@@ -6094,11 +6196,15 @@ function showFlightNarration(text, callback, sceneEmoji, sceneClass, artworkPosi
         sceneEl.innerHTML = '<div class="premium-cabin-nap"><img src="assets/generated/premium-cabin-nap-build59.png" alt="Two lie-flat premium cabin beds beneath moonlit aircraft windows"><div class="nap-scene-label"><small>Cabin lights dimmed</small><b>Resting above the clouds</b></div></div>';
         sceneEl.style.fontSize = '';
     }
+    else if (customChatScene) {
+        sceneEl.innerHTML = flightChatSceneMarkup();
+        sceneEl.style.fontSize = '';
+    }
     else {
         sceneEl.textContent = usedEmoji;
         sceneEl.style.fontSize = '90px';
     }
-    sceneWrap.style.display = artworkPosition || usedEmoji || customNapScene ? 'block' : 'none';
+    sceneWrap.style.display = artworkPosition || usedEmoji || customNapScene || customChatScene ? 'block' : 'none';
     artworkEl.style.display = artworkPosition ? 'block' : 'none';
     artworkEl.style.setProperty('--poster-position', artworkPosition || '0% 0%');
     const cloudsEl = document.getElementById('flightCloudsDecor');
@@ -6246,14 +6352,31 @@ function jumpToAdminScreen(id) {
 function buildAdminLinks() {
     const grid = document.getElementById('adminLinkGrid');
     grid.innerHTML = '';
-    document.querySelectorAll('.screen[id^="screen-"]').forEach(screen => {
-        const button = document.createElement('button');
-        button.type = 'button';
-        button.className = 'admin-jump';
-        button.innerHTML = `${escapeHTML(adminScreenLabel(screen))}<span>${escapeHTML(screen.id.replace('screen-', '').replaceAll('-', ' '))}</span>`;
-        button.addEventListener('click', () => jumpToAdminScreen(screen.id));
-        grid.appendChild(button);
-    });
+    const groups = [
+        { title: 'Race Setup', ids: ['screen-title', 'screen-setup', 'screen-startcity', 'screen-intro'] },
+        { title: 'Travel & Flights', ids: ['screen-transport1', 'screen-transport2', 'screen-transport3', 'screen-transport-sub', 'screen-busseats', 'screen-seating', 'screen-buckle', 'screen-inflight', 'screen-entertainment', 'screen-entertainment-catalog', 'screen-flightservice'] },
+        { title: 'Tasks & Challenges', ids: ['screen-detour', 'screen-slurp', 'screen-rhythm', 'screen-stack', 'screen-simon', 'screen-match', 'screen-gamble', 'screen-language', 'screen-code', 'screen-roadblock-intro', 'screen-rps', 'screen-confer', 'screen-arcade'] },
+        { title: 'Results & Checkpoints', ids: ['screen-detour-result', 'screen-roadblock-result', 'screen-yield', 'screen-pitstop-arrival', 'screen-checkpoint-arrival', 'screen-checkpoint', 'screen-pitstop'] }
+    ];
+    const added = new Set();
+    const appendGroup = (title, screens) => {
+        if (!screens.length) return;
+        const heading = document.createElement('div');
+        heading.className = 'admin-group-title';
+        heading.textContent = title;
+        grid.appendChild(heading);
+        screens.forEach(screen => {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'admin-jump';
+            button.innerHTML = `${escapeHTML(adminScreenLabel(screen))}<span>${escapeHTML(screen.id.replace('screen-', '').replaceAll('-', ' '))}</span>`;
+            button.addEventListener('click', () => jumpToAdminScreen(screen.id));
+            grid.appendChild(button);
+            added.add(screen.id);
+        });
+    };
+    groups.forEach(group => appendGroup(group.title, group.ids.map(id => document.getElementById(id)).filter(Boolean)));
+    appendGroup('Other Screens', Array.from(document.querySelectorAll('.screen[id^="screen-"]')).filter(screen => !added.has(screen.id)));
 }
 function enableAdminSession() {
     if (!adminModeActive) {

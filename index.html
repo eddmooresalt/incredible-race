@@ -66,7 +66,7 @@
     <div id="taskClueBanner"></div>
     <div id="taskClueSealed">
       <div class="route-label">Race Clue Box</div>
-      <div class="real-clue-box" role="img" aria-label="Professional red and gold race clue box"><div class="box-header">RACE CLUE</div><div class="box-body"><div class="box-slot"></div></div><div class="box-leg left"></div><div class="box-leg right"></div><div class="box-foot left"></div><div class="box-foot right"></div></div>
+      <div class="real-clue-box ai-clue-box" role="img" aria-label="Professional red and gold race clue box"><img src="assets/generated/race-clue-box-build60b.png" alt="Red, cream and gold race clue box"></div>
       <button class="btn btn-primary" onclick="openTaskClueBox()">Open the Clue Box &rarr;</button>
     </div>
     <div id="taskClueRevealed" style="display:none; width:100%; max-width:340px;">
@@ -146,7 +146,7 @@
           <div id="routeCurrentBannerSlot"></div>
           <div class="route-speed-lines"></div>
           <div class="route-approach-location" id="routeApproachLocationTag">Current Location</div>
-          <div class="clue-station real-clue-box" role="img" aria-label="Professional red and gold race clue box"><div class="box-header">RACE CLUE</div><div class="box-body"><div class="box-slot"></div></div><div class="box-leg left"></div><div class="box-leg right"></div><div class="box-foot left"></div><div class="box-foot right"></div></div>
+          <div class="clue-station real-clue-box ai-clue-box" role="img" aria-label="Professional red and gold race clue box"><img src="assets/generated/race-clue-box-build60b.png" alt="Red, cream and gold race clue box"></div>
           <div class="route-approach-badge" id="routeDistanceBadge">80 m away</div>
         </div>
         <div class="route-approach-status" id="routeApproachStatus">Running to the clue box…</div>
@@ -252,6 +252,7 @@
     <div class="route-label">En Route</div>
     <div class="vehicle-interior-banner" id="travelInteriorBanner"></div>
     <div class="travel-scene" id="travelEmojiScene">
+      <img class="travel-walk-art" src="assets/generated/walk-en-route-build60b.webp" alt="Two racers in long travel pants walking together in sneakers along a sunlit path">
       <div class="travel-vehicle" id="travelEmoji">🚕</div>
       <div class="travel-road"></div>
     </div>
@@ -353,7 +354,7 @@
       <span><b id="titleCountryCount" style="color:var(--gold); font-size:17px;">—</b> COUNTRIES</span>
       <span><b style="color:var(--gold); font-size:17px;">1</b> WINNER</span>
     </div>
-    <button type="button" class="build-stamp build-stamp-link" id="patchNotesOpen" aria-haspopup="dialog" aria-controls="patchNotesModal">Verified Build 60A · August 2026<span>View patch notes</span></button>
+    <button type="button" class="build-stamp build-stamp-link" id="patchNotesOpen" aria-haspopup="dialog" aria-controls="patchNotesModal">Verified Build 61 · August 2026<span>View patch notes</span></button>
     <p class="host-line" id="titleRaceSummary">Race across a randomized global route, outthink eleven rival teams, and reach the final mat first.</p>
     <div class="main-cta">
       <button class="btn btn-outline" id="continueRaceBtn" style="display:none; margin-bottom:10px;" onclick="resumeGame()">Continue Race &rarr;</button>
@@ -509,7 +510,7 @@
     <h1 class="headline">Hit the <em>Beat</em></h1>
     <div class="rhythm-instruction"><b>Tap when the moving arrow fits inside its gold target.</b><span>Arrow centred in the target = PERFECT</span></div>
     <div class="score-line">Score: <b id="rhythmScore">0</b> &middot; Combo: <b id="rhythmCombo">0</b> &middot; Misses: <b id="rhythmMisses">0</b></div>
-    <div class="rhythm-stage" id="rhythmStage"><div class="rhythm-perfect-label">PERFECT TIMING</div><div class="rhythm-lanes" id="rhythmLanes"><div class="rhythm-lane"><div class="rhythm-target-arrow">←</div></div><div class="rhythm-lane"><div class="rhythm-target-arrow">↓</div></div><div class="rhythm-lane"><div class="rhythm-target-arrow">↑</div></div><div class="rhythm-lane"><div class="rhythm-target-arrow">→</div></div></div><div class="rhythm-target-line"></div></div>
+    <div class="rhythm-stage" id="rhythmStage"><div class="rhythm-lanes" id="rhythmLanes"><div class="rhythm-lane"><div class="rhythm-target-arrow">←</div></div><div class="rhythm-lane"><div class="rhythm-target-arrow">↓</div></div><div class="rhythm-lane"><div class="rhythm-target-arrow">↑</div></div><div class="rhythm-lane"><div class="rhythm-target-arrow">→</div></div></div><div class="rhythm-target-line"></div></div>
     <div class="rhythm-feedback" id="rhythmFeedback">Get Ready</div>
     <div class="rhythm-controls">
       <button class="btn btn-outline rhythm-key" onclick="tapRhythmLane(0)">←</button>
@@ -974,13 +975,20 @@
     </header>
     <div class="patch-notes-scroll" tabindex="0">
     <article class="patch-entry latest">
+      <div class="patch-entry-head"><div><span class="patch-build-number">Build 61</span><h3>Travel, Events &amp; Artwork</h3></div><time>6 Aug 2026</time></div>
+      <ul><li>Rebuilt rail transport around verified landmark-level services, removed invented hash-assigned lines and wrong-line narration, and corrected Changi Airport to the East-West Line airport branch.</li></ul>
+      <ul><li>Replaced the code-drawn clue box with a transparent AI-generated race prop that remains overlaid on every location banner during the approach.</li></ul>
+      <ul><li>Rebuilt in-flight Chat with the player and partner portraits, alternating speech bubbles, and randomized travel topics over the cabin backdrop.</li><li>Replaced the low-fidelity Mercado de Coyoacán banner with a sharp, locally hosted 2172 × 724 market artwork.</li><li>Random race events now appear before racers begin running to the clue box.</li></ul>
+      <ul><li>Replaced the walking emoji animation with cinematic game artwork of two teammates in long travel pants and sneakers.</li><li>Replaced the broken Bondi Beach banner with sharp, locally hosted artwork.</li><li>Organized the Admin Playtest Hub into Race Setup, Travel &amp; Flights, Tasks &amp; Challenges, and Results &amp; Checkpoints.</li><li>Removed the obstructive PERFECT TIMING badge, lengthened the Hit the Beat lanes, and slowed incoming arrows for more reaction time.</li><li>Preserved all walking costs, time, energy, narration, and progress mechanics.</li></ul>
+    </article>
+    <article class="patch-entry">
       <div class="patch-entry-head"><div><span class="patch-build-number">Build 60A</span><h3>Private Admin Playtest Mode</h3></div><time>6 Aug 2026</time></div>
       <ul><li>Added PIN-gated, session-only admin access at the bottom of the game.</li><li>Added a playtest hub linking to every game screen and playable task.</li><li>Protected normal saved progress during admin testing and added a persistent Back to Main Game control.</li></ul>
     </article>
     <article class="patch-entry">
       <div class="patch-entry-head">
         <div>
-          <span class="patch-build-number">Build 61</span>
+          <span class="patch-build-number">Build 60</span>
           <h3>Clearer Perfect Beat Timing</h3>
         </div>
         <time>6 Aug 2026</time>
@@ -1057,7 +1065,7 @@
       </div>
       <ul><li>Uploaded the migrated web-project baseline used for continued game development.</li><li>Kept the core HTML, CSS, JavaScript gameplay structure and existing race content together in one project.</li></ul>
     </article></div>
-    <div class="patch-notes-footer">Latest verified version · Build 60A</div>
+    <div class="patch-notes-footer">Latest verified version · Build 61</div>
   </section>
 </div>
 <script id="patchNotesScript">
