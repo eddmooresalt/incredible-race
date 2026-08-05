@@ -1610,7 +1610,6 @@ function showScreen(id) {
     let idx = screenOrder.indexOf(subMap[id] || id);
     for (let i = 0; i < 12; i++)
         document.getElementById('dot-' + i).classList.toggle('on', i <= idx);
-    animateTextIn(document.getElementById(id));
     if (['screen-title', 'screen-setup', 'screen-startcity', 'screen-seating', 'screen-buckle', 'screen-inflight', 'screen-entertainment', 'screen-entertainment-catalog', 'screen-flightservice'].includes(id))
         clearLandmarkBanner();
     if (SAFE_SAVE_SCREENS.includes(id))
@@ -2107,7 +2106,6 @@ function openRouteClueBox() {
         const rbSlot = document.getElementById('routeBannerSlot');
         rbSlot.innerHTML = display.banner ? renderBannerSVG(display.banner, display.bannerName || display.place, display.label) : '';
         document.getElementById('routeInfoOverlay').style.display = 'flex';
-        animateTextIn(document.getElementById('routeInfoOverlay'));
     });
 }
 function openPendingClueBox() {
@@ -2819,7 +2817,6 @@ function askTrainStranger() {
     slider.disabled = true;
     document.getElementById('trainAskBtn').disabled = true;
     document.getElementById('trainAskBtn').textContent = tip === 0 ? 'Advice Received · No Tip' : 'Advice Received · Tip Paid';
-    animateTextIn(bubble);
 }
 /* ---------- TRAVEL NARRATION (forced 5 seconds, no skip) ---------- */
 function buildNarrationText(modeKey, lineName, destLabel, note, correctName) {
@@ -3169,7 +3166,6 @@ function showRaceEvent(onContinue) {
         wrap.appendChild(btn);
     });
     document.getElementById('raceEventOverlay').style.display = 'flex';
-    animateTextIn(document.getElementById('raceEventOverlay'));
 }
 function resolveRaceEventOption(act, stake) {
     const sym = currentLegData.currencySymbol;
@@ -3196,7 +3192,6 @@ function resolveRaceEventOption(act, stake) {
     document.getElementById('raceEventEffectText').textContent = bits.join(' \u00B7 ');
     document.getElementById('raceEventOutcomeSection').style.display = 'block';
     document.getElementById('raceEventContinueBtn').style.display = 'block';
-    animateTextIn(document.getElementById('raceEventOutcomeSection'));
 }
 function continueRaceEvent() {
     document.getElementById('raceEventOverlay').style.display = 'none';
@@ -5516,7 +5511,6 @@ function showFlightReadyDialog() {
     document.getElementById('counterAgentLine').textContent = agent.line;
     document.getElementById('counterQueueText').textContent = QUEUE_LINES[Math.floor(Math.random() * QUEUE_LINES.length)];
     document.getElementById('flightReadyOverlay').style.display = 'flex';
-    animateTextIn(document.getElementById('flightReadyOverlay'));
 }
 function confirmFlightReady() {
     document.getElementById('flightReadyOverlay').style.display = 'none';
