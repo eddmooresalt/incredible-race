@@ -373,7 +373,7 @@
       <span><b id="titleCountryCount" style="color:var(--gold); font-size:17px;">—</b> COUNTRIES</span>
       <span><b style="color:var(--gold); font-size:17px;">1</b> WINNER</span>
     </div>
-    <button type="button" class="build-stamp build-stamp-link" id="patchNotesOpen" aria-haspopup="dialog" aria-controls="patchNotesModal">Verified Build 62B · August 2026<span>View patch notes</span></button>
+    <button type="button" class="build-stamp build-stamp-link" id="patchNotesOpen" aria-haspopup="dialog" aria-controls="patchNotesModal">Verified Build 63 · August 2026<span>View patch notes</span></button>
     <p class="host-line" id="titleRaceSummary">Race across a randomized global route, outthink eleven rival teams, and reach the final mat first.</p>
     <div class="main-cta">
       <button class="btn btn-outline" id="continueRaceBtn" style="display:none; margin-bottom:10px;" onclick="resumeGame()">Continue Race &rarr;</button>
@@ -790,10 +790,15 @@
   <div class="screen" id="screen-arcade">
     <div class="eyebrow">Neon Maze &middot; <span id="arcadeWho">You</span></div>
     <h1 class="headline">Run the <em>Maze</em></h1>
-    <div class="maze-hud"><span>Route dots <b id="arcadeScore">0</b>/<b id="arcadeGoal">18</b></span><span>Time <b id="arcadeTime">40.0</b>s</span></div>
-    <div class="maze-shell"><div class="maze-board" id="arcadeArea" aria-label="Neon maze game board"></div></div>
-    <div class="maze-controls" aria-label="Maze direction controls"><button onclick="moveMazePlayer(-1,0)" aria-label="Move up">▲</button><div><button onclick="moveMazePlayer(0,-1)" aria-label="Move left">◀</button><button onclick="moveMazePlayer(1,0)" aria-label="Move down">▼</button><button onclick="moveMazePlayer(0,1)" aria-label="Move right">▶</button></div></div>
-    <p class="host-line maze-help">Collect 18 glowing route dots before time expires. Swipe or use the arrows, and avoid the moving patrols.</p>
+    <div class="maze-hud"><span>Route dots <b id="arcadeScore">0</b>/<b id="arcadeGoal">22</b></span><span>Time <b id="arcadeTime">40.0</b>s</span></div>
+    <div class="maze-shell">
+      <div class="maze-board" id="arcadeArea" aria-label="Neon maze game board"></div>
+      <div class="maze-controls" aria-label="Tap to move through the maze">
+        <button type="button" onclick="moveMazePlayer(-1,0)" aria-label="Move up">▲</button>
+        <div><button type="button" onclick="moveMazePlayer(0,-1)" aria-label="Move left">◀</button><button type="button" onclick="moveMazePlayer(1,0)" aria-label="Move down">▼</button><button type="button" onclick="moveMazePlayer(0,1)" aria-label="Move right">▶</button></div>
+      </div>
+    </div>
+    <p class="host-line maze-help" id="mazeHelp">Collect 22 dots, then reach the glowing flag. Swipe the maze or tap the arrow pad.</p>
   </div>
 
   <!-- ROADBLOCK RESULT -->
@@ -983,7 +988,7 @@
 
 <div id="adminPlaytestHub" aria-hidden="true">
   <section class="admin-hub-panel" role="dialog" aria-modal="true" aria-labelledby="adminHubTitle">
-    <div class="admin-hub-head"><div><div class="route-label">Build 62B</div><h2 id="adminHubTitle">Admin Playtest Hub</h2><p>Jump directly to any game screen or playable task.</p></div><button type="button" id="adminHubClose" aria-label="Close admin hub">×</button></div>
+    <div class="admin-hub-head"><div><div class="route-label">Build 63</div><h2 id="adminHubTitle">Admin Playtest Hub</h2><p>Jump directly to any game screen or playable task.</p></div><button type="button" id="adminHubClose" aria-label="Close admin hub">×</button></div>
     <div class="admin-link-grid" id="adminLinkGrid"></div>
   </section>
 </div>
@@ -1000,6 +1005,11 @@
     </header>
     <div class="patch-notes-scroll" tabindex="0">
     <article class="patch-entry latest">
+      <div class="patch-entry-head"><div><span class="patch-build-number">Build 63</span><h3>Maze Finish &amp; Task Control Fixes</h3></div><time>6 Aug 2026</time></div>
+      <ul><li>Added a glowing finish flag at the far end of Neon Maze Chase.</li><li>Players must collect 22 route dots and then reach the flag; arriving early clearly reports how many dots remain.</li><li>Moved a compact directional pad into the maze frame so mobile players always have tappable controls, while preserving swipe and keyboard play.</li></ul>
+      <ul><li>Repaired the missing Break the Code Submit Guess button and made its visibility reset whenever the puzzle begins.</li></ul>
+    </article>
+    <article class="patch-entry">
       <div class="patch-entry-head"><div><span class="patch-build-number">Build 62B</span><h3>Flights, Touchdown &amp; Arcade Upgrade</h3></div><time>6 Aug 2026</time></div>
       <ul><li>Players can keep choosing nap, chat, or entertainment activities while enough flight time remains.</li><li>Nap and chat are repeatable; each programme remains unavailable after one watch.</li><li>Cabin service now arrives once after the first completed activity, then returns players to the activity menu.</li><li>Every activity consumes its stated flight time, and only shows that fit the remaining journey can be started.</li></ul>
       <ul><li>Added a cinematic airport departures display with live 24-hour flight times, dynamically generated route cities and flight numbers, plus believable out-of-race destinations.</li><li>Ride-hail and rental-car arrivals can race for the last early-flight seats; train, bus, and walking arrivals are placed on the later departure.</li></ul>
@@ -1102,7 +1112,7 @@
       </div>
       <ul><li>Uploaded the migrated web-project baseline used for continued game development.</li><li>Kept the core HTML, CSS, JavaScript gameplay structure and existing race content together in one project.</li></ul>
     </article></div>
-    <div class="patch-notes-footer">Latest verified version · Build 62B</div>
+    <div class="patch-notes-footer">Latest verified version · Build 63</div>
   </section>
 </div>
 <script id="patchNotesScript">

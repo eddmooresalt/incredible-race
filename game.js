@@ -4038,7 +4038,11 @@ function startCode(context) {
     document.getElementById('codeGuessCount').textContent = '0';
     document.getElementById('codeHistory').innerHTML = '';
     document.getElementById('codeHistoryEmpty').style.display = 'block';
-    document.getElementById('codeSubmitBtn').disabled = false;
+    const codeSubmitButton = document.getElementById('codeSubmitBtn');
+    codeSubmitButton.disabled = false;
+    codeSubmitButton.style.display = 'flex';
+    codeSubmitButton.style.visibility = 'visible';
+    codeSubmitButton.style.opacity = '1';
     document.getElementById('codeStatusLine').textContent = 'Use the arrows to scroll each slot to a number, then submit your guess.';
     renderCodeSlots();
     showScreen('screen-code');
@@ -4672,7 +4676,8 @@ const MAZE_MAP = [
     '#.....#...#',
     '###########'
 ];
-const MAZE_GOAL = 18;
+const MAZE_GOAL = 22;
+const MAZE_FINISH = { r: 8, c: 9 };
 let arcadeScore = 0, arcadeTimeLeft = 40.0, arcadeInt, arcadeSpawnInt;
 let mazePlayer = { r: 1, c: 1 }, mazeStart = { r: 1, c: 1 }, mazePatrols = [], mazeDots = new Set();
 let mazeHits = 0, mazeActive = false, mazeTouchStart = null, mazeRunnerAngle = 0;
@@ -4695,6 +4700,7 @@ function startArcade() {
     document.getElementById('arcadeScore').textContent = '0';
     document.getElementById('arcadeGoal').textContent = MAZE_GOAL;
     document.getElementById('arcadeTime').textContent = '40.0';
+    document.getElementById('mazeHelp').textContent = `Collect ${MAZE_GOAL} dots, then reach the glowing flag. Swipe the maze or tap the arrow pad.`;
     const area = document.getElementById('arcadeArea');
     area.style.gridTemplateColumns = `repeat(${MAZE_MAP[0].length},1fr)`;
     area.style.gridTemplateRows = `repeat(${MAZE_MAP.length},1fr)`;
@@ -4736,6 +4742,8 @@ function renderMazeBoard() {
         tile.className = `maze-cell${cell === '#' ? ' wall' : ''}`;
         if (cell !== '#' && mazeDots.has(mazeKey(r, c)))
             tile.innerHTML = '<i class="maze-dot"></i>';
+        if (cell === 'G')
+            tile.innerHTML = `<i class="maze-goal${arcadeScore >= MAZE_GOAL ? '' : ' locked'}" role="img" aria-label="Finish flag">🏁</i>`;
         if (mazePlayer.r === r && mazePlayer.c === c)
             tile.innerHTML = `<i class="maze-runner" style="--runner-angle:${mazeRunnerAngle}deg"></i>`;
         const patrol = mazePatrols.find(item => item.r === r && item.c === c);
@@ -4759,8 +4767,15 @@ function moveMazePlayer(dr, dc) {
     }
     checkMazeCollision();
     renderMazeBoard();
-    if (arcadeScore >= MAZE_GOAL)
-        finishMazeGame(true);
+    if (next.r === MAZE_FINISH.r && next.c === MAZE_FINISH.c) {
+        if (arcadeScore >= MAZE_GOAL) {
+            finishMazeGame(true);
+        }
+        else {
+            const remaining = MAZE_GOAL - arcadeScore;
+            document.getElementById('mazeHelp').textContent = `The finish is locked — collect ${remaining} more dot${remaining === 1 ? '' : 's'}, then return to the flag.`;
+        }
+    }
 }
 function moveMazePatrols() {
     if (!mazeActive)
@@ -4814,7 +4829,7 @@ function getRoadblockTheme(type) {
         ...base,
         title: 'Neon Maze Chase',
         taskEmoji: '🟡',
-        desc: 'Navigate a glowing 2D maze, collect 18 route dots and evade two moving patrols before the 40-second clock expires.',
+        desc: 'Navigate a glowing 2D maze, collect 22 route dots, then reach the finish flag while evading two moving patrols before the 40-second clock expires.',
         winLine: 'threaded the neon maze cleanly, swept up the route dots and stayed ahead of both patrols.',
         loseLine: 'made it through the neon maze, but the patrols forced several resets and left route dots scattered behind.'
     };
