@@ -909,12 +909,19 @@
   .car-speed-fill{height:100%; background:linear-gradient(90deg,var(--gold),#43D17B);}
 
   /* ---- rhythm task ---- */
+  .rhythm-instruction{margin:2px 0 9px; padding:9px 12px; border:1px solid rgba(242,184,7,.42); border-radius:12px; background:rgba(242,184,7,.08); text-align:center; color:#fff; font:700 12px/1.35 'JetBrains Mono',monospace;}
+  .rhythm-instruction b{display:block; color:var(--gold); font-size:13px;}
+  .rhythm-instruction span{display:block; margin-top:2px; color:rgba(245,240,230,.72);}
   .rhythm-stage{position:relative; height:330px; margin:6px 0 8px; border:1px solid rgba(242,184,7,.3); border-radius:17px; overflow:hidden; background:linear-gradient(180deg,#111A31,#070B14); box-shadow:inset 0 0 35px rgba(0,0,0,.55);}
   .rhythm-lanes{position:absolute; inset:0; display:grid; grid-template-columns:repeat(4,1fr);}
   .rhythm-lane{position:relative; border-right:1px solid rgba(245,240,230,.1);}
   .rhythm-lane:nth-child(1){background:linear-gradient(180deg,rgba(37,99,235,.13),transparent)}.rhythm-lane:nth-child(2){background:linear-gradient(180deg,rgba(236,72,153,.12),transparent)}.rhythm-lane:nth-child(3){background:linear-gradient(180deg,rgba(34,197,94,.12),transparent)}.rhythm-lane:nth-child(4){background:linear-gradient(180deg,rgba(249,115,22,.12),transparent)}
   .rhythm-lane:last-child{border-right:0;}
-  .rhythm-target-line{position:absolute; z-index:2; left:0; right:0; bottom:48px; height:4px; background:var(--gold); box-shadow:0 0 18px rgba(242,184,7,.75);}
+  .rhythm-perfect-label{position:absolute; z-index:4; left:50%; bottom:97px; transform:translateX(-50%); padding:4px 9px; border-radius:999px; background:var(--gold); color:#101522; font:900 9px/1 'JetBrains Mono',monospace; letter-spacing:.09em; white-space:nowrap; box-shadow:0 0 16px rgba(242,184,7,.55);}
+  .rhythm-target-line{position:absolute; z-index:2; left:0; right:0; bottom:39px; height:56px; border-top:2px solid rgba(242,184,7,.9); border-bottom:2px solid rgba(242,184,7,.9); background:rgba(242,184,7,.10); box-shadow:0 0 22px rgba(242,184,7,.28),inset 0 0 18px rgba(242,184,7,.10); pointer-events:none;}
+  .rhythm-target-arrow{position:absolute; z-index:2; left:50%; bottom:44px; width:46px; height:46px; transform:translateX(-50%); border-radius:50% 50% 12px 12px; display:grid; place-items:center; color:var(--gold); border:3px dashed var(--gold); background:rgba(242,184,7,.08); font:900 29px/1 Arial,sans-serif; opacity:.82; text-shadow:0 0 10px rgba(242,184,7,.75); box-shadow:0 0 14px rgba(242,184,7,.22);}
+  .rhythm-stage.perfect-hit .rhythm-target-line{animation:rhythmPerfectFlash .24s ease-out;}
+  @keyframes rhythmPerfectFlash{50%{background:rgba(125,220,255,.42);border-color:#7ddcff;box-shadow:0 0 34px rgba(125,220,255,.8)}}
   .rhythm-note{position:absolute; z-index:3; left:50%; top:-48px; width:46px; height:46px; transform:translateX(-50%); border-radius:50% 50% 12px 12px; display:grid; place-items:center; background:linear-gradient(145deg,#1c2943,#070c16); border:3px solid currentColor; color:#58a6ff; font:900 29px/1 'Arial',sans-serif; text-shadow:0 0 12px currentColor; box-shadow:0 8px 18px rgba(0,0,0,.48),inset 0 0 0 3px rgba(255,255,255,.08),inset 0 0 12px currentColor;}
   .rhythm-note[data-lane="1"]{color:#f472b6}.rhythm-note[data-lane="2"]{color:#4ade80}.rhythm-note[data-lane="3"]{color:#fb923c}
   .rhythm-controls{display:grid; grid-template-columns:repeat(4,1fr); gap:7px;}
@@ -922,6 +929,7 @@
   .rhythm-key:nth-child(1){color:#58a6ff;border-color:#2563eb}.rhythm-key:nth-child(2){color:#f472b6;border-color:#db2777}.rhythm-key:nth-child(3){color:#4ade80;border-color:#16a34a}.rhythm-key:nth-child(4){color:#fb923c;border-color:#ea580c}
   .rhythm-feedback{min-height:27px; text-align:center; font:700 18px 'Anton',sans-serif; letter-spacing:.05em; color:var(--gold); text-transform:uppercase;}
   .rhythm-feedback.perfect{color:#7ddcff}.rhythm-feedback.great{color:#b987ff}.rhythm-feedback.good{color:#43d17b}.rhythm-feedback.bad{color:#ff9d42}.rhythm-feedback.miss{color:#ff4b62}
+  @media(max-height:720px){.rhythm-instruction{padding:6px 9px;margin-bottom:5px}}
 
   /* ---- real playing-card treatment ---- */
   .playing-card{position:relative; width:70px; height:100px; border-radius:10px; background:linear-gradient(145deg,#FFFDF7,#EDE7DA); border:2px solid #fff; box-shadow:0 7px 15px rgba(0,0,0,.36),inset 0 0 0 1px #cfc7b8; color:#111827; font-family:Georgia,serif; flex:0 0 auto; overflow:hidden;}

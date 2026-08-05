@@ -353,7 +353,7 @@
       <span><b id="titleCountryCount" style="color:var(--gold); font-size:17px;">—</b> COUNTRIES</span>
       <span><b style="color:var(--gold); font-size:17px;">1</b> WINNER</span>
     </div>
-    <button type="button" class="build-stamp build-stamp-link" id="patchNotesOpen" aria-haspopup="dialog" aria-controls="patchNotesModal">Verified Build 60 · August 2026<span>View patch notes</span></button>
+    <button type="button" class="build-stamp build-stamp-link" id="patchNotesOpen" aria-haspopup="dialog" aria-controls="patchNotesModal">Verified Build 61 · August 2026<span>View patch notes</span></button>
     <p class="host-line" id="titleRaceSummary">Race across a randomized global route, outthink eleven rival teams, and reach the final mat first.</p>
     <div class="main-cta">
       <button class="btn btn-outline" id="continueRaceBtn" style="display:none; margin-bottom:10px;" onclick="resumeGame()">Continue Race &rarr;</button>
@@ -507,8 +507,9 @@
   <div class="screen" id="screen-rhythm">
     <div class="eyebrow">Rhythm Run</div>
     <h1 class="headline">Hit the <em>Beat</em></h1>
+    <div class="rhythm-instruction"><b>Tap when the moving arrow fits inside its gold target.</b><span>Arrow centred in the target = PERFECT</span></div>
     <div class="score-line">Score: <b id="rhythmScore">0</b> &middot; Combo: <b id="rhythmCombo">0</b> &middot; Misses: <b id="rhythmMisses">0</b></div>
-    <div class="rhythm-stage" id="rhythmStage"><div class="rhythm-lanes" id="rhythmLanes"><div class="rhythm-lane"></div><div class="rhythm-lane"></div><div class="rhythm-lane"></div><div class="rhythm-lane"></div></div><div class="rhythm-target-line"></div></div>
+    <div class="rhythm-stage" id="rhythmStage"><div class="rhythm-perfect-label">PERFECT TIMING</div><div class="rhythm-lanes" id="rhythmLanes"><div class="rhythm-lane"><div class="rhythm-target-arrow">←</div></div><div class="rhythm-lane"><div class="rhythm-target-arrow">↓</div></div><div class="rhythm-lane"><div class="rhythm-target-arrow">↑</div></div><div class="rhythm-lane"><div class="rhythm-target-arrow">→</div></div></div><div class="rhythm-target-line"></div></div>
     <div class="rhythm-feedback" id="rhythmFeedback">Get Ready</div>
     <div class="rhythm-controls">
       <button class="btn btn-outline rhythm-key" onclick="tapRhythmLane(0)">←</button>
@@ -953,6 +954,16 @@
     <article class="patch-entry latest">
       <div class="patch-entry-head">
         <div>
+          <span class="patch-build-number">Build 61</span>
+          <h3>Clearer Perfect Beat Timing</h3>
+        </div>
+        <time>6 Aug 2026</time>
+      </div>
+      <ul><li>Replaced the ambiguous timing line with four arrow-shaped PERFECT targets aligned to the actual scoring position.</li><li>Added a direct on-screen instruction and immediate Early, Late, or Perfect feedback.</li><li>Kept the existing rhythm difficulty, scoring, and race progress behavior.</li></ul>
+    </article>
+    <article class="patch-entry">
+      <div class="patch-entry-head">
+        <div>
           <span class="patch-build-number">Build 60</span>
           <h3>Narration-Only Typewriter</h3>
         </div>
@@ -1020,7 +1031,7 @@
       </div>
       <ul><li>Uploaded the migrated web-project baseline used for continued game development.</li><li>Kept the core HTML, CSS, JavaScript gameplay structure and existing race content together in one project.</li></ul>
     </article></div>
-    <div class="patch-notes-footer">Latest verified version · Build 60</div>
+    <div class="patch-notes-footer">Latest verified version · Build 61</div>
   </section>
 </div>
 <script id="patchNotesScript">

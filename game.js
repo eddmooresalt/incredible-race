@@ -3317,7 +3317,7 @@ function startRhythm(context) {
     setTimeout(() => {
         if (rhythmFinished)
             return;
-        document.getElementById('rhythmFeedback').textContent = 'Follow the Gold Line';
+        document.getElementById('rhythmFeedback').textContent = 'Fit the Arrow in the Gold Target';
         spawnRhythmNote();
         rhythmSpawnTimer = setInterval(spawnRhythmNote, 470);
         rhythmRaf = requestAnimationFrame(updateRhythmNotes);
@@ -3372,14 +3372,20 @@ function tapRhythmLane(lane) {
         rhythmCombo++;
         note.resolved = true;
         note.el.remove();
-        if (points === 100)
-            setRhythmFeedback('Perfect', 'perfect');
+        const timing = note.progress < RHYTHM_TARGET_PROGRESS ? 'Early' : 'Late';
+        if (points === 100) {
+            setRhythmFeedback('Perfect · Arrow Aligned', 'perfect');
+            const stage = document.getElementById('rhythmStage');
+            stage.classList.remove('perfect-hit');
+            void stage.offsetWidth;
+            stage.classList.add('perfect-hit');
+        }
         else if (points === 85)
-            setRhythmFeedback('Great', 'great');
+            setRhythmFeedback(`${timing} · Great`, 'great');
         else if (points === 60)
-            setRhythmFeedback('Good', 'good');
+            setRhythmFeedback(`${timing} · Good`, 'good');
         else
-            setRhythmFeedback('Bad', 'bad');
+            setRhythmFeedback(`${timing} · Too Far`, 'bad');
     }
     updateRhythmReadout();
 }
