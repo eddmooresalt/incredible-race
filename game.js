@@ -1634,8 +1634,13 @@ function mountAttemptForfeit(target, id) {
 }
 /* ---------- SAVE / RESUME (best-effort; falls back silently if storage is unavailable) ---------- */
 const SAVE_KEY = 'incredibleRaceSave_v1';
+const ADMIN_SESSION_KEY = 'incredibleRaceAdminSession';
+const ADMIN_SAVE_BACKUP_KEY = 'incredibleRaceAdminSaveBackup';
+let adminModeActive = sessionStorage.getItem(ADMIN_SESSION_KEY) === '1';
 const SAFE_SAVE_SCREENS = ['screen-startcity', 'screen-intro', 'screen-transport1', 'screen-detour', 'screen-transport2', 'screen-roadblock-intro', 'screen-checkpoint-arrival', 'screen-checkpoint', 'screen-pitstop-arrival', 'screen-pitstop', 'screen-yield'];
 function saveGameState(screenId) {
+    if (adminModeActive)
+        return;
     try {
         const state = {
             screen: screenId,
@@ -6202,6 +6207,107 @@ function skipCinematicIntro() {
 function finishCinematicIntro() {
     document.getElementById('introCinematicOverlay').style.display = 'none';
 }
+/* ---------- SESSION-ONLY ADMIN PLAYTEST ---------- */
+const ADMIN_PIN_HASH = 'a26e5d5912c87a334c5ee5bf15793046ee47739f396023945be7195d35fd2495';
+async function hashAdminPin(value) {
+    const data = new TextEncoder().encode(value);
+    const digest = await crypto.subtle.digest('SHA-256', data);
+    return Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, '0')).join('');
+}
+function setAdminOverlay(id, open) {
+    const el = document.getElementById(id);
+    el.classList.toggle('open', open);
+    el.setAttribute('aria-hidden', open ? 'false' : 'true');
+}
+function openAdminHub() { setAdminOverlay('adminPlaytestHub', true); }
+function closeAdminHub() { setAdminOverlay('adminPlaytestHub', false); }
+function adminScreenLabel(screen) {
+    const headline = screen.querySelector('h1, .headline');
+    const eyebrow = screen.querySelector('.eyebrow');
+    return (headline ? headline.textContent : eyebrow ? eyebrow.textContent : screen.id.replace('screen-', '')).replace(/\s+/g, ' ').trim();
+}
+function jumpToAdminScreen(id) {
+    closeAdminHub();
+    activeTaskContext = 'admin';
+    const starters = {
+        'screen-slurp': () => startSlurp('admin'),
+        'screen-rhythm': () => startRhythm('admin'),
+        'screen-stack': () => startStack('admin'),
+        'screen-simon': () => startSimon('admin'),
+        'screen-match': () => startCulturalMatch('admin'),
+        'screen-gamble': () => startGamble('admin'),
+        'screen-language': () => startLanguageGame('admin'),
+        'screen-code': () => startCode('admin'),
+        'screen-arcade': () => startArcade()
+    };
+    if (starters[id]) starters[id]();
+    else showScreen(id);
+}
+function buildAdminLinks() {
+    const grid = document.getElementById('adminLinkGrid');
+    grid.innerHTML = '';
+    document.querySelectorAll('.screen[id^="screen-"]').forEach(screen => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'admin-jump';
+        button.innerHTML = `${escapeHTML(adminScreenLabel(screen))}<span>${escapeHTML(screen.id.replace('screen-', '').replaceAll('-', ' '))}</span>`;
+        button.addEventListener('click', () => jumpToAdminScreen(screen.id));
+        grid.appendChild(button);
+    });
+}
+function enableAdminSession() {
+    if (!adminModeActive) {
+        const existingSave = localStorage.getItem(SAVE_KEY);
+        sessionStorage.setItem(ADMIN_SAVE_BACKUP_KEY, existingSave === null ? '__NO_SAVE__' : existingSave);
+    }
+    adminModeActive = true;
+    sessionStorage.setItem(ADMIN_SESSION_KEY, '1');
+    document.body.classList.add('admin-session');
+    setAdminOverlay('adminPinOverlay', false);
+    buildAdminLinks();
+    openAdminHub();
+}
+function exitAdminToMainGame() {
+    const backup = sessionStorage.getItem(ADMIN_SAVE_BACKUP_KEY);
+    if (backup === '__NO_SAVE__') localStorage.removeItem(SAVE_KEY);
+    else if (backup !== null) localStorage.setItem(SAVE_KEY, backup);
+    sessionStorage.removeItem(ADMIN_SESSION_KEY);
+    sessionStorage.removeItem(ADMIN_SAVE_BACKUP_KEY);
+    location.reload();
+}
+function initAdminPlaytest() {
+    const pinOverlay = document.getElementById('adminPinOverlay');
+    const pinInput = document.getElementById('adminPinInput');
+    const pinError = document.getElementById('adminPinError');
+    document.getElementById('adminAccessLink').addEventListener('click', () => {
+        pinInput.value = '';
+        pinError.textContent = '';
+        setAdminOverlay('adminPinOverlay', true);
+        setTimeout(() => pinInput.focus(), 0);
+    });
+    document.getElementById('adminPinCancel').addEventListener('click', () => setAdminOverlay('adminPinOverlay', false));
+    document.getElementById('adminPinSubmit').addEventListener('click', async () => {
+        if (await hashAdminPin(pinInput.value.trim()) === ADMIN_PIN_HASH) enableAdminSession();
+        else {
+            pinError.textContent = 'Incorrect PIN. Try again.';
+            pinInput.select();
+        }
+    });
+    pinInput.addEventListener('keydown', event => {
+        if (event.key === 'Enter') document.getElementById('adminPinSubmit').click();
+    });
+    pinOverlay.addEventListener('click', event => {
+        if (event.target === pinOverlay) setAdminOverlay('adminPinOverlay', false);
+    });
+    document.getElementById('adminHubOpen').addEventListener('click', openAdminHub);
+    document.getElementById('adminHubClose').addEventListener('click', closeAdminHub);
+    document.getElementById('adminExitMain').addEventListener('click', exitAdminToMainGame);
+    if (adminModeActive) {
+        document.body.classList.add('admin-session');
+        buildAdminLinks();
+    }
+}
+initAdminPlaytest();
 startCinematicIntro();
 /* Legacy inline-handler bridge.
    The migrated app uses an ES module, while the preserved Build 35 markup still

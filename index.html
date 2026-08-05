@@ -353,7 +353,7 @@
       <span><b id="titleCountryCount" style="color:var(--gold); font-size:17px;">—</b> COUNTRIES</span>
       <span><b style="color:var(--gold); font-size:17px;">1</b> WINNER</span>
     </div>
-    <button type="button" class="build-stamp build-stamp-link" id="patchNotesOpen" aria-haspopup="dialog" aria-controls="patchNotesModal">Verified Build 61 · August 2026<span>View patch notes</span></button>
+    <button type="button" class="build-stamp build-stamp-link" id="patchNotesOpen" aria-haspopup="dialog" aria-controls="patchNotesModal">Verified Build 60A · August 2026<span>View patch notes</span></button>
     <p class="host-line" id="titleRaceSummary">Race across a randomized global route, outthink eleven rival teams, and reach the final mat first.</p>
     <div class="main-cta">
       <button class="btn btn-outline" id="continueRaceBtn" style="display:none; margin-bottom:10px;" onclick="resumeGame()">Continue Race &rarr;</button>
@@ -940,7 +940,29 @@
   <div class="progress-dots">
     <span class="on" id="dot-0"></span><span id="dot-1"></span><span id="dot-2"></span><span id="dot-3"></span><span id="dot-4"></span><span id="dot-5"></span><span id="dot-6"></span><span id="dot-7"></span><span id="dot-8"></span><span id="dot-9"></span><span id="dot-10"></span><span id="dot-11"></span>
   </div>
+  <button type="button" class="admin-access-link" id="adminAccessLink">Admin Playtest</button>
 </div>
+
+<div id="adminPinOverlay" aria-hidden="true">
+  <div class="admin-pin-card" role="dialog" aria-modal="true" aria-labelledby="adminPinTitle">
+    <div class="route-label">Private Access</div>
+    <h2 id="adminPinTitle">Admin Playtest</h2>
+    <p>Enter your six-digit PIN to open every game screen for this browser session.</p>
+    <input id="adminPinInput" type="password" inputmode="numeric" maxlength="6" autocomplete="one-time-code" aria-label="Admin PIN" placeholder="6-digit PIN">
+    <div class="admin-pin-error" id="adminPinError" aria-live="polite"></div>
+    <button type="button" class="btn btn-primary" id="adminPinSubmit">Unlock Playtest</button>
+    <button type="button" class="btn btn-outline" id="adminPinCancel">Cancel</button>
+  </div>
+</div>
+
+<div id="adminPlaytestHub" aria-hidden="true">
+  <section class="admin-hub-panel" role="dialog" aria-modal="true" aria-labelledby="adminHubTitle">
+    <div class="admin-hub-head"><div><div class="route-label">Build 60A</div><h2 id="adminHubTitle">Admin Playtest Hub</h2><p>Jump directly to any game screen or playable task.</p></div><button type="button" id="adminHubClose" aria-label="Close admin hub">×</button></div>
+    <div class="admin-link-grid" id="adminLinkGrid"></div>
+  </section>
+</div>
+
+<div id="adminSessionDock"><span>ADMIN PLAYTEST</span><button type="button" id="adminHubOpen">All Screens</button><button type="button" id="adminExitMain">Back to Main Game</button></div>
 
 <script type="module" src="./game.js"></script>
 
@@ -952,6 +974,10 @@
     </header>
     <div class="patch-notes-scroll" tabindex="0">
     <article class="patch-entry latest">
+      <div class="patch-entry-head"><div><span class="patch-build-number">Build 60A</span><h3>Private Admin Playtest Mode</h3></div><time>6 Aug 2026</time></div>
+      <ul><li>Added PIN-gated, session-only admin access at the bottom of the game.</li><li>Added a playtest hub linking to every game screen and playable task.</li><li>Protected normal saved progress during admin testing and added a persistent Back to Main Game control.</li></ul>
+    </article>
+    <article class="patch-entry">
       <div class="patch-entry-head">
         <div>
           <span class="patch-build-number">Build 61</span>
@@ -1031,7 +1057,7 @@
       </div>
       <ul><li>Uploaded the migrated web-project baseline used for continued game development.</li><li>Kept the core HTML, CSS, JavaScript gameplay structure and existing race content together in one project.</li></ul>
     </article></div>
-    <div class="patch-notes-footer">Latest verified version · Build 61</div>
+    <div class="patch-notes-footer">Latest verified version · Build 60A</div>
   </section>
 </div>
 <script id="patchNotesScript">
