@@ -144,6 +144,7 @@
         <div class="route-step-kicker">Reach the Clue Box</div>
         <div id="routeApproachScene" aria-label="Running toward the clue box">
           <div id="routeCurrentBannerSlot"></div>
+          <div class="clue-ground-plane" aria-hidden="true"></div>
           <div class="route-speed-lines"></div>
           <div class="route-approach-location" id="routeApproachLocationTag">Current Location</div>
           <div class="clue-station real-clue-box ai-clue-box" role="img" aria-label="Professional red and gold race clue box"><img src="assets/generated/race-clue-box-build60b.png" alt="Red, cream and gold race clue box"></div>
@@ -354,7 +355,7 @@
       <span><b id="titleCountryCount" style="color:var(--gold); font-size:17px;">—</b> COUNTRIES</span>
       <span><b style="color:var(--gold); font-size:17px;">1</b> WINNER</span>
     </div>
-    <button type="button" class="build-stamp build-stamp-link" id="patchNotesOpen" aria-haspopup="dialog" aria-controls="patchNotesModal">Verified Build 61 · August 2026<span>View patch notes</span></button>
+    <button type="button" class="build-stamp build-stamp-link" id="patchNotesOpen" aria-haspopup="dialog" aria-controls="patchNotesModal">Verified Build 62 · August 2026<span>View patch notes</span></button>
     <p class="host-line" id="titleRaceSummary">Race across a randomized global route, outthink eleven rival teams, and reach the final mat first.</p>
     <div class="main-cta">
       <button class="btn btn-outline" id="continueRaceBtn" style="display:none; margin-bottom:10px;" onclick="resumeGame()">Continue Race &rarr;</button>
@@ -754,8 +755,8 @@
     </div>
     <div class="confer-confidence-title">Live confidence reading</div>
     <div class="confidence-stage">
-      <div class="confidence-person"><b>You</b><div class="confidence-meter"><span class="confidence-arrow" id="playerConfidenceArrow">▶</span></div><div class="confidence-value" id="playerConfidenceValue">70 / 100</div></div>
-      <div class="confidence-person"><div class="confidence-label"><span class="partner-mini-avatar" id="partnerAvatarConfer">👨🏽</span><b id="partnerNameConfer">Partner</b></div><div class="confidence-meter"><span class="confidence-arrow" id="partnerConfidenceArrow">▶</span></div><div class="confidence-value" id="partnerConfidenceValue">70 / 100</div></div>
+      <div class="confidence-person"><b>You</b><div class="confidence-meter"><span class="confidence-arrow" id="playerConfidenceArrow">▼</span></div><div class="confidence-value" id="playerConfidenceValue">70 / 100</div></div>
+      <div class="confidence-person"><div class="confidence-label"><span class="partner-mini-avatar" id="partnerAvatarConfer">👨🏽</span><b id="partnerNameConfer">Partner</b></div><div class="confidence-meter"><span class="confidence-arrow" id="partnerConfidenceArrow">▼</span></div><div class="confidence-value" id="partnerConfidenceValue">70 / 100</div></div>
     </div>
     <div class="card"><p id="conferAdvice">Take a breath, compare the meters, then make the call.</p></div>
     <div class="btn-row">
@@ -860,6 +861,7 @@
         <div class="yield-stat-card"><span class="yield-stat-label">Eligible teams</span><span class="yield-stat-value" id="yieldEligibleStat">0</span></div>
       </div>
     </div>
+    <div class="yield-limit-note"><b>1 Yield Per Race</b><span>Once you use it, it is gone for the rest of this race.</span></div>
     <p class="host-line yield-action-note" id="yieldHostLine">You can force a team behind you to wait one hour. Choose carefully — they'll know it was you.</p>
     <div id="yieldDecisionPanel" class="btn-row">
       <button class="btn btn-primary" id="yieldSlowBtn" onclick="openYieldTeamPicker()"><span class="yield-btn-main">Slow Someone Down</span><span class="yield-btn-sub">Choose an eligible team behind you</span></button>
@@ -958,7 +960,7 @@
 
 <div id="adminPlaytestHub" aria-hidden="true">
   <section class="admin-hub-panel" role="dialog" aria-modal="true" aria-labelledby="adminHubTitle">
-    <div class="admin-hub-head"><div><div class="route-label">Build 60A</div><h2 id="adminHubTitle">Admin Playtest Hub</h2><p>Jump directly to any game screen or playable task.</p></div><button type="button" id="adminHubClose" aria-label="Close admin hub">×</button></div>
+    <div class="admin-hub-head"><div><div class="route-label">Build 62</div><h2 id="adminHubTitle">Admin Playtest Hub</h2><p>Jump directly to any game screen or playable task.</p></div><button type="button" id="adminHubClose" aria-label="Close admin hub">×</button></div>
     <div class="admin-link-grid" id="adminLinkGrid"></div>
   </section>
 </div>
@@ -975,6 +977,11 @@
     </header>
     <div class="patch-notes-scroll" tabindex="0">
     <article class="patch-entry latest">
+      <div class="patch-entry-head"><div><span class="patch-build-number">Build 62</span><h3>Fairer Rankings &amp; Mobile Gameplay Polish</h3></div><time>6 Aug 2026</time></div>
+      <ul><li>Rebuilt first-leg standings so rival clocks advance through shared journeys, strong task scores create meaningful advantages, competent teams receive onboarding grace, and a perfect Detour plus perfect Roadblock guarantees first place.</li><li>Replaced randomized rank previews with performance-based projections while preserving forfeits, Yield penalties, energy consequences, final pacing, and saved progress.</li></ul>
+      <ul><li>Grounded every clue box on a softly blended paved foreground, with dedicated airport tarmac for terminal scenes.</li><li>Prevented Roadblock performer details and Yield statistics from shrinking or clipping on mobile.</li><li>Converted partner confidence meters to horizontal blue-to-red scales.</li><li>Expanded Hit the Beat lanes without changing their 2.7-second timing.</li><li>Added a clear one-Yield-per-race notice.</li></ul>
+    </article>
+    <article class="patch-entry">
       <div class="patch-entry-head"><div><span class="patch-build-number">Build 61</span><h3>Travel, Events &amp; Artwork</h3></div><time>6 Aug 2026</time></div>
       <ul><li>Rebuilt rail transport around verified landmark-level services, removed invented hash-assigned lines and wrong-line narration, and corrected Changi Airport to the East-West Line airport branch.</li></ul>
       <ul><li>Replaced the code-drawn clue box with a transparent AI-generated race prop that remains overlaid on every location banner during the approach.</li></ul>
@@ -1065,7 +1072,7 @@
       </div>
       <ul><li>Uploaded the migrated web-project baseline used for continued game development.</li><li>Kept the core HTML, CSS, JavaScript gameplay structure and existing race content together in one project.</li></ul>
     </article></div>
-    <div class="patch-notes-footer">Latest verified version · Build 61</div>
+    <div class="patch-notes-footer">Latest verified version · Build 62</div>
   </section>
 </div>
 <script id="patchNotesScript">

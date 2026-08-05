@@ -1344,6 +1344,7 @@ function startDetourGame(slot) {
         startCode('detour');
 }
 let rivalTimes = [];
+let rivalSyncPlayerElapsed = 0;
 let isFirstAtCheckpoint = false;
 let partnerName = '';
 let partnerRelationship = 'Randomly Paired';
@@ -1651,6 +1652,7 @@ function saveGameState(screenId) {
             experiencedTaskTypes: [...experiencedTaskTypes], taskPlayHistory: [...taskPlayHistory], lastCompletedTaskType, detourCompletedType,
             chosenStartCity, yieldedTeamName,
             rivalTimes: rivalTimes ? [...rivalTimes] : [],
+            rivalSyncPlayerElapsed,
             playerElapsed,
             usedRaceEventIds: [...usedRaceEventIds],
             timeForfeitThisLeg,
@@ -1714,6 +1716,7 @@ function resumeGame() {
     chosenStartCity = state.chosenStartCity;
     yieldedTeamName = state.yieldedTeamName;
     rivalTimes = state.rivalTimes || [];
+    rivalSyncPlayerElapsed = Number.isFinite(state.rivalSyncPlayerElapsed) ? state.rivalSyncPlayerElapsed : (state.playerElapsed || 0);
     playerElapsed = state.playerElapsed || 0;
     usedRaceEventIds = state.usedRaceEventIds || [];
     timeForfeitThisLeg = !!state.timeForfeitThisLeg;
@@ -2074,6 +2077,7 @@ function showClueBoxApproach(currentLoc, label) {
     openButton.style.display = 'none';
     openButton.disabled = true;
     const scene = document.getElementById('routeApproachScene');
+    scene.classList.toggle('airport-ground', currentLoc.banner && currentLoc.banner.shape === 'airport-terminal');
     scene.classList.remove('approaching');
     document.getElementById('routeDistanceBadge').textContent = '80 m away';
     document.getElementById('routeApproachStatus').textContent = 'Running to the clue box…';
@@ -4489,8 +4493,8 @@ function showConferScreen() {
     partnerRoadblockConfidence = 42 + Math.floor(Math.random() * 53);
     document.getElementById('playerConfidenceValue').textContent = `${playerRoadblockConfidence} / 100`;
     document.getElementById('partnerConfidenceValue').textContent = `${partnerRoadblockConfidence} / 100`;
-    document.getElementById('playerConfidenceArrow').style.bottom = `${playerRoadblockConfidence}%`;
-    document.getElementById('partnerConfidenceArrow').style.bottom = `${partnerRoadblockConfidence}%`;
+    document.getElementById('playerConfidenceArrow').style.left = `${playerRoadblockConfidence}%`;
+    document.getElementById('partnerConfidenceArrow').style.left = `${partnerRoadblockConfidence}%`;
     const p = partnerFirstName();
     document.getElementById('conferSceneBanner').innerHTML = renderBannerSVG(currentLegData.dest2.banner, currentLegData.dest2.place, 'Roadblock Decision');
     document.getElementById('conferPlayerAvatar').innerHTML = renderRacerAvatar(playerGender, playerTone, playerCostume);
@@ -4909,16 +4913,43 @@ function previewProjectedRank(textElId) {
         updateRankHud(rank);
         return;
     }
-    const elapsedSoFar = Math.max(1, clockMinutes - legStartClock);
-    let better = 0;
-    ensureSurvivingRivals().forEach(() => {
-        const est = Math.max(10, elapsedSoFar * (0.75 + Math.random() * 0.8));
-        if (est < elapsedSoFar)
-            better++;
-    });
-    const rank = better + 1;
+    const rank = projectedRankFromPerformance();
     document.getElementById(textElId).textContent = `Right now you're tracking for ${ordinal(rank)} place out of ${fieldSize()}.`;
     updateRankHud(rank);
+}
+
+function rankingPerformanceAverage() {
+    const detourScore = Number.isFinite(performance.detour) && performance.detour > 0 ? performance.detour : 60;
+    const roadblockScore = Number.isFinite(performance.roadblock) && performance.roadblock > 0 ? performance.roadblock : 60;
+    return (detourScore + roadblockScore) / 2;
+}
+function hasPerfectOverallPerformance() {
+    return !timeForfeitThisLeg && performance.detour >= 99.5 && performance.roadblock >= 99.5;
+}
+function rankingSkillEdgeMinutes() {
+    return Math.max(-8, Math.min(10, (rankingPerformanceAverage() - 60) * 0.25));
+}
+function rankingGraceMinutes() {
+    return currentLegData.legNumber === 1 ? 6 : currentLegData.legNumber === 2 ? 2 : 0;
+}
+function projectedRankFromPerformance() {
+    if (hasPerfectOverallPerformance())
+        return 1;
+    const rivalCount = ensureSurvivingRivals().length;
+    const shift = rankingSkillEdgeMinutes() + rankingGraceMinutes();
+    const aheadChance = Math.max(0, Math.min(1, (18 - shift) / 36));
+    return Math.max(1, Math.min(rivalCount + 1, 1 + Math.round(rivalCount * aheadChance)));
+}
+function syncRivalClocksToPlayer() {
+    if (!rivalTimes.length)
+        return;
+    // Sync only shared route-clock travel. The player's low-energy penalty stays
+    // personal and must not be copied onto rival teams.
+    const now = Math.max(0, clockMinutes - legStartClock);
+    const sharedTravel = Math.max(0, now - rivalSyncPlayerElapsed);
+    if (sharedTravel > 0)
+        rivalTimes = rivalTimes.map(time => time + sharedTravel);
+    rivalSyncPlayerElapsed = now;
 }
 /* ---------- AMBIENT ADVENTURE MUSIC (Web Audio, looped) ---------- */
 let audioCtx = null, musicStarted = false, musicGain = null, musicOn = true;
@@ -5145,8 +5176,23 @@ function goToYield() {
         rivals.forEach(() => rivalTimes.push(Math.max(1, playerElapsed - (8 + Math.random() * 42))));
     }
     else {
-        rivals.forEach(() => rivalTimes.push(Math.max(15, playerElapsed * (0.75 + Math.random() * 0.8))));
+        const fieldShift = rankingGraceMinutes() + rankingSkillEdgeMinutes();
+        rivals.forEach(() => rivalTimes.push(Math.max(15, playerElapsed + (-18 + Math.random() * 36) + fieldShift)));
+        // Leg 1 is an onboarding leg: a competent run cannot be randomly dumped at
+        // the very back of the field before the player has learned the race economy.
+        if (currentLegData.legNumber === 1 && rankingPerformanceAverage() >= 60) {
+            const minimumBehind = Math.min(4, rivals.length);
+            const behindNow = rivalTimes.filter(time => time > playerElapsed).length;
+            if (behindNow < minimumBehind) {
+                const order = rivalTimes.map((time, index) => ({ time, index })).sort((a, b) => b.time - a.time);
+                for (let i = behindNow; i < minimumBehind; i++)
+                    rivalTimes[order[i].index] = playerElapsed + 4 + i * 2;
+            }
+        }
+        if (hasPerfectOverallPerformance())
+            rivalTimes = rivalTimes.map((time, index) => Math.max(time, playerElapsed + 10 + index * 0.35));
     }
+    rivalSyncPlayerElapsed = Math.max(0, clockMinutes - legStartClock);
     // Serving an incoming Yield must have a visible race consequence: at least one
     // rival is ahead, so the player can be no better than second at this board.
     if (incomingYieldApplied && rivalTimes.length && rivalTimes.every(t => t >= playerElapsed)) {
@@ -5260,9 +5306,9 @@ function showCheckpointArrival() {
 }
 function arriveAtCheckpoint() {
     setLandmarkBanner(fastForwardLocation(), 'Fast Forward');
-    // Refresh elapsed time to include the transport hop just taken to reach the Pit Stop —
-    // rivalTimes stay as generated at the Yield stage (including any Yield penalty applied).
+    // Refresh elapsed time and advance the field through the same shared journey.
     playerElapsed = effectiveElapsed();
+    syncRivalClocksToPlayer();
     const fastestRival = Math.min(...rivalTimes);
     isFirstAtCheckpoint = playerElapsed <= fastestRival;
     const hostLine = document.getElementById('checkpointHostLine');
@@ -5310,6 +5356,10 @@ function rollFastForward() {
 /* Confirms arrival at the Pit Stop landmark before any standings are revealed. */
 function showPitStopArrival() {
     const stop = currentLegData.pitStop;
+    // Both the player and the field complete the shared checkpoint-to-Pit-Stop
+    // journey. Sync that common travel before the player's final pace choice,
+    // which remains a genuine opportunity to gain or lose places.
+    syncRivalClocksToPlayer();
     setLandmarkBanner(stop, 'Pit Stop');
     document.getElementById('psArrivalPlace').textContent = stop.place;
     document.getElementById('psArrivalWhere').textContent = currentLegData.countryFull;
@@ -5348,6 +5398,11 @@ function buildPitStop() {
     document.getElementById('pitstopHostBanner').innerHTML = renderBannerSVG(currentLegData.pitStop.banner, currentLegData.pitStop.place, 'Pit Stop');
     document.getElementById('pitstopHostImage').src = GENERATED_ART.raceHost;
     document.getElementById('pitstopLegNum').textContent = currentLegData.legNumber;
+    // A flawless Detour plus flawless Roadblock is the strongest possible leg.
+    // Honour it as an unconditional first-place finish even if later random field
+    // variation or an energy penalty would otherwise move a rival ahead.
+    if (hasPerfectOverallPerformance())
+        rivalTimes = rivalTimes.map((time, index) => Math.max(time, playerElapsed + 1 + index * 0.25));
     const rivals = ensureSurvivingRivals();
     const teams = [{ name: 'You &amp; ' + escapeHTML(partnerName), status: escapeHTML(partnerRelationship), avatars: [renderRacerAvatar(playerGender, playerTone, playerCostume), renderRacerAvatar(partnerGender, partnerTone, partnerCostume)], time: playerElapsed, you: true }];
     rivals.forEach((rt, i) => {
@@ -5417,6 +5472,8 @@ function ordinal(n) {
 function restartProto() {
     clearGameState();
     performance = { detour: 0, roadblock: 0, fastForward: 0 };
+    rivalTimes = [];
+    rivalSyncPlayerElapsed = 0;
     experiencedTaskTypes = new Set();
     taskPlayHistory = [];
     lastCompletedTaskType = null;
@@ -6251,6 +6308,8 @@ function startNextLeg() {
     budget = currentLegData.startBudget;
     clockMinutes = arrivalLocalClock;
     legStartClock = clockMinutes;
+    rivalTimes = [];
+    rivalSyncPlayerElapsed = 0;
     energy = Math.max(20, energy - 12);
     incomingYieldApplied = false;
     incomingYieldChecked = false;
